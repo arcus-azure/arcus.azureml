@@ -1,7 +1,7 @@
-repository: arcus-azure/arcus.{Component}
+repository: arcus-azure/arcus.azureml
 theme: jekyll-theme-slate
 logo: https://raw.githubusercontent.com/arcus-azure/arcus/master/media/arcus.png
-title: Arcus {Component}
-description: {Component} development in Azure with a breeze
+title: Arcus Azure ML
+description: Azure ML development in Azure with a breeze
 plugins:
   - jemoji
