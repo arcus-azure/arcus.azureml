@@ -30,5 +30,13 @@ steps:
   inputs:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: |
+      # Write your commands here
+      
+      cat $(PYPIRC_PATH) 
+
 - script: |
-   twine upload -r "Arcus AzureML PyPi feed" --config-file $(PYPIRC_PATH) $(Build.ArtifactStagingDirectory)/dist
+   twine upload -r "Arcus AzureML PyPi feed" --config-file $(Build.ArtifactStagingDirectory)/dist
