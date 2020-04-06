@@ -35,5 +35,5 @@ steps:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
 - script: |
-   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) 'src/dist'
+   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) 'dist'
   displayName: 'Publish to PyPi through Twine'
