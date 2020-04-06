@@ -40,18 +40,11 @@ steps:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
 - task: Bash@3
-  displayName: 'list staging dir'
-  inputs:
-    targetType: 'inline'
-    script: |
-      ls -l -d $(Build.ArtifactStagingDirectory)/*/ 
-
-- task: Bash@3
   displayName: 'list workspace dir'
   inputs:
     targetType: 'inline'
     script: |
-      ls -l -d $(Pipeline.Workspace)/*/ 
+      ls -l -d $(Pipeline.Workspace)
 
 - script: |
    twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) '$(Build.ArtifactStagingDirectory)/dist/dist'
