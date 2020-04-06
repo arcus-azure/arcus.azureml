@@ -1,0 +1,31 @@
+# Starter pipeline
+
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7'
+    addToPath: true
+    architecture: 'x64'
+
+- script: python -m pip install --upgrade pip setuptools wheel
+  displayName: 'Install tools'
+
+- script: pip install -r src/requirements.txt
+  displayName: 'Install requirements'
+
+- task: TwineAuthenticate@1
+  inputs:
+    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
+
+- script: |
+   twine upload -r "Arcus AzureML PyPi feed" src/arcus
