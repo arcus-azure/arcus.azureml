@@ -39,4 +39,4 @@ steps:
       cat $(PYPIRC_PATH) 
 
 - script: |
-   twine upload -r "Arcus AzureML PyPi feed" --config-file $(Build.ArtifactStagingDirectory)/dist
+   twine upload -r 'arcus-azure-pypi' --config-file $(Build.ArtifactStagingDirectory)/dist
