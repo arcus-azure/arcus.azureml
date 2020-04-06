@@ -38,5 +38,5 @@ steps:
       cat $(PYPIRC_PATH) 
 
 - script: |
+   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) dist '$(Build.ArtifactStagingDirectory)/dist'
   displayName: 'Publish to PyPi through Twine'
-  twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) dist '$(Build.ArtifactStagingDirectory)/dist'
