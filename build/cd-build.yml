@@ -31,12 +31,12 @@ steps:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
 - task: Bash@3
-  displayName: 'Check PyPirc file'
+  displayName: 'list staging dir'
   inputs:
     targetType: 'inline'
     script: |
-      cat $(PYPIRC_PATH) 
+      ls $(Build.ArtifactStagingDirectory)
 
 - script: |
-   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) '$(Build.ArtifactStagingDirectory)/dist'
+   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) '$(Build.ArtifactStagingDirectory)/dist/dist'
   displayName: 'Publish to PyPi through Twine'
