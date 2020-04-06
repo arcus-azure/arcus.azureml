@@ -30,6 +30,11 @@ steps:
 - script: python -m pip install --upgrade twine
   displayName: 'Install Twine'
 
+- task: CmdLine@2
+  inputs:
+    script: |
+      ls src/dist/
+      ls dist/
 - task: TwineAuthenticate@1
   inputs:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
