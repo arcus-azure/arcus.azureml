@@ -24,7 +24,7 @@ steps:
   displayName: 'Install requirements'
 
 - script: |    
-    python src/setup.py sdist 
+    python src/setup.py bdist_wheel 
   displayName: 'Artifact creation'
 
 - script: python -m pip install --upgrade twine
@@ -35,5 +35,5 @@ steps:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
 - script: |
-   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) dist/*.*
+   python -m twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) dist/*.whl
   displayName: 'Publish to PyPi through Twine'
