@@ -336,3 +336,4 @@ src/.DS_Store
 src/dist/
 src/build/
 *.egg-info
+.pytest_cache/

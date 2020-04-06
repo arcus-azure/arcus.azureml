@@ -1,13 +1,30 @@
 import setuptools
+import arcus
+import sys
+
+from setuptools.command.test import test as TestCommand
 
 with open("README.md", "r") as fh:
     long_description = fh.read()
 
+class PyTest(TestCommand):
+    def finalize_options(self):
+        TestCommand.finalize_options(self)
+        self.test_args = []
+        self.test_suite = True
+
+    def run_tests(self):
+        import pytest
+        errcode = pytest.main(self.test_args)
+        sys.exit(errcode)
+
 setuptools.setup(
     name="arcus-azureml", # Replace with your own username
-    version="0.0.1",
+    version=arcus.__version__,
     author="Sam Vanhoutte",
     author_email="sam.vanhoutte@codit.eu",
+    tests_require=['pytest'],
+    cmdclass={'test': PyTest},
     description="A Python library to improve MLOps methodology on Azure Machine Learning",
     long_description=long_description,
     long_description_content_type="text/markdown",
@@ -19,4 +36,7 @@ setuptools.setup(
         "Operating System :: OS Independent",
     ],
     python_requires='>=3.6',
+    extras_require={
+        'testing': ['pytest'],
+    }
 )
