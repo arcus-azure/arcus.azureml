@@ -11,6 +11,15 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+- task: DownloadPipelineArtifact@2
+  inputs:
+    buildType: 'specific'
+    project: '1c8932c0-4bd6-4248-afa1-9936a7f1b63f'
+    definition: '833'
+    specificBuildWithTriggering: true
+    buildVersionToDownload: 'latest'
+    targetPath: '$(Pipeline.Workspace)'
+
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.7'
