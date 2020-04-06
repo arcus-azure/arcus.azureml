@@ -11,15 +11,6 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- task: DownloadPipelineArtifact@2
-  inputs:
-    buildType: 'specific'
-    project: '1c8932c0-4bd6-4248-afa1-9936a7f1b63f'
-    definition: '833'
-    specificBuildWithTriggering: true
-    buildVersionToDownload: 'latest'
-    artifactName: 'dist'
-    targetPath: '$(Pipeline.Workspace)'
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.7'
@@ -32,6 +23,10 @@ steps:
 - script: pip install -r src/requirements.txt
   displayName: 'Install requirements'
 
+- script: |    
+    python src/setup.py sdist 
+  displayName: 'Artifact creation'
+
 - script: python -m pip install --upgrade twine
   displayName: 'Install Twine'
 
@@ -40,5 +35,5 @@ steps:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
 - script: |
-   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) '/home/vsts/work/1/a/dist'
+   twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) 'src/dist'
   displayName: 'Publish to PyPi through Twine'
