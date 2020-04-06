@@ -18,8 +18,8 @@ steps:
     definition: '833'
     specificBuildWithTriggering: true
     buildVersionToDownload: 'latest'
+    artifactName: 'dist'
     targetPath: '$(Pipeline.Workspace)'
-
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.7'
@@ -38,13 +38,6 @@ steps:
 - task: TwineAuthenticate@1
   inputs:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
-
-- task: Bash@3
-  displayName: 'list workspace dir'
-  inputs:
-    targetType: 'inline'
-    script: |
-      ls -l -d $(Pipeline.Workspace)
 
 - script: |
    twine upload -r 'arcus-azure-pypi' --config-file $(PYPIRC_PATH) '$(Build.ArtifactStagingDirectory)/dist/dist'
