@@ -4,7 +4,7 @@ import sys
 
 from setuptools.command.test import test as TestCommand
 
-with open("package-description.md", "r") as fh:
+with open("src/package-description.md", "r") as fh:
     long_description = fh.read()
 
 class PyTest(TestCommand):
