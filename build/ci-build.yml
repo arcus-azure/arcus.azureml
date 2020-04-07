@@ -14,100 +14,50 @@ pr:
     - src/*
     - build/ci-build.yml
 
-resources:
-  repositories:
-    - repository: templates
-      type: github
-      name: arcus-azure/azure-devops-templates
-      endpoint: arcus-azure
+pool:
+  vmImage: 'ubuntu-latest'
 
-variables:
-  - group: 'Arcus - GitHub Package Registry'
-  - group: 'Build Configuration'
-  - template: ./variables/build.yml
-    # 'Package.Version.ManualTrigger' is added as queue-time variable on build in Azure DevOps
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7'
+    addToPath: true
+    architecture: 'x64'
 
-stages:
-  - stage: Build
-    jobs:
-      - job: Compile
-        pool:
-          vmImage: 'ubuntu-16.04'
-        steps:
-          - template: 'nuget/determine-pr-version.yml@templates'
-            parameters:
-              manualTriggerVersion: $(Package.Version.ManualTrigger)
-          - template: 'build/build-solution.yml@templates'
-            parameters:
-              dotnetSdkVersion: '$(DotNet.Sdk.Version)'
-              versionSuffix: '$(packageVersion)'
-          - task: CopyFiles@2
-            displayName: 'Copy build artifacts'
-            inputs:
-              contents: '**/?(bin|obj)/**'
-              targetFolder: '$(Pipeline.Workspace)/build'
-          - task: PublishPipelineArtifact@0
-            displayName: 'Publish build artifacts'
-            inputs:
-              targetPath: '$(Pipeline.Workspace)/build'
-              artifactName: Build
+- script: python -m pip install --upgrade pip setuptools wheel
+  displayName: 'Install tools'
 
-  - stage: UnitTests
-    displayName: Unit Tests
-    dependsOn: Build
-    condition: succeeded()
-    jobs:
-      - job: UnitTests
-        displayName: 'Run unit tests'
-        pool:
-          vmImage: 'ubuntu-16.04'
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download build artifacts'
-            inputs:
-              artifact: 'Build'
-              path: '$(Build.SourcesDirectory)'
-          - template: test/run-unit-tests.yml@templates
-            parameters:
-              dotnetSdkVersion: '$(DotNet.Sdk.Version)'
-              projectName: '$(Project).Tests.Unit'
+- script: pip install -r src/requirements.txt
+  displayName: 'Install requirements'
 
-  - stage: IntegrationTests
-    displayName: Integration Tests
-    dependsOn: Build
-    condition: succeeded()
-    jobs:
-      - job: IntegrationTests
-        displayName: 'Run integration tests'
-        pool:
-          vmImage: 'ubuntu-16.04'
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download build artifacts'
-            inputs:
-              artifact: 'Build'
-              path: '$(Build.SourcesDirectory)'
-          - template: test/run-integration-tests.yml@templates
-            parameters:
-              dotnetSdkVersion: '$(DotNet.Sdk.Version)'
-              projectName: '$(Project).Tests.Integration'
-              category: 'Integration'
+- script: |
+    pip install pytest
+    pip install pytest-cov
+    pytest src/tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
+  displayName: 'Test with pytest'
 
-  - stage: ReleaseToMyget
-    displayName: 'Release to MyGet'
-    dependsOn:
-      - UnitTests
-      - IntegrationTests
-    condition: succeeded()
-    jobs:
-      - job: PushToMyGet
-        displayName: 'Push to MyGet'
-        pool:
-          vmImage: 'ubuntu-16.04'
-        steps:
-          - task: DownloadPipelineArtifact@2
-            displayName: 'Download build artifacts'
-            inputs:
-              artifact: 'Build'
-              path: '$(Build.SourcesDirectory)'
-          - template: nuget/publish-preview-package.yml@templates
+- task: PublishTestResults@2
+  condition: succeededOrFailed()
+  inputs:
+    testResultsFiles: '**/test-*.xml'
+    testRunTitle: 'Publish test results for Python $(python.version)'
+
+- task: PublishCodeCoverageResults@1
+  inputs:
+    codeCoverageTool: Cobertura
+    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+
+- script: |    
+    python src/setup.py sdist 
+  displayName: 'Artifact creation'
+
+- task: CopyFiles@2  
+  inputs:    
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: PublishBuildArtifacts@1  
+  inputs:    
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
+    ArtifactName: 'dist'    
+    publishLocation: 'Container'
