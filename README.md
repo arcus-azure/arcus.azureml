@@ -2,7 +2,7 @@
 [![Build Status](https://dev.azure.com/codit/Arcus/_apis/build/status/Commit%20builds/CI%20-%20Arcus.AzureML?branchName=master)](https://dev.azure.com/codit/Arcus/_build/latest?definitionId=833&branchName=master)
 [![PyPI version](https://badge.fury.io/py/arcus-azure-ml.svg)](https://badge.fury.io/py/arcus-azure-ml)
 
-Azure Event Grid development in a breeze.
+Azure Machine Learning development in a breeze.
 
 ![Arcus](https://raw.githubusercontent.com/arcus-azure/arcus/master/media/arcus.png)
 

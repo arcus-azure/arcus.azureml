@@ -4,7 +4,7 @@ import sys
 
 from setuptools.command.test import test as TestCommand
 
-with open("README.md", "r") as fh:
+with open("package-description.md", "r") as fh:
     long_description = fh.read()
 
 class PyTest(TestCommand):
@@ -21,8 +21,8 @@ class PyTest(TestCommand):
 setuptools.setup(
     name="arcus-azureml", # Replace with your own username
     version=arcus.__version__,
-    author="Sam Vanhoutte",
-    author_email="sam.vanhoutte@codit.eu",
+    author="Arcus",
+    author_email="arcus-automation@codit.eu",
     tests_require=['pytest'],
     cmdclass={'test': PyTest},
     description="A Python library to improve MLOps methodology on Azure Machine Learning",
