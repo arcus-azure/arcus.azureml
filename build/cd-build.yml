@@ -31,5 +31,5 @@ steps:
   displayName: 'Install Twine'
 
 - script: |
-   python -m twine upload --verbose -p $(pypi-api-token) -u __token__ --repository $(pypi-project-name) --repository-url https://upload.pypi.org/legacy/ dist/*.whl
+   python -m twine upload --skip-existing --verbose -p $(pypi-api-token) -u __token__ --repository $(pypi-project-name) --repository-url https://upload.pypi.org/legacy/ dist/*.whl
   displayName: 'Publish to PyPi through Twine'
