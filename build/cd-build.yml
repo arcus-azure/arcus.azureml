@@ -30,14 +30,6 @@ steps:
 - script: python -m pip install --upgrade twine
   displayName: 'Install Twine'
 
-- task: TwineAuthenticate@1
-  inputs:
-    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
-
-- script: |
-   cat $(PYPIRC_PATH)
-  displayName: 'Show pypirc config file'
-
 - script: |
    python -m twine upload --verbose -p $(pypi-api-token) -u __token__ --repository $(pypi-project-name) --repository-url https://upload.pypi.org/legacy/ dist/*.whl
   displayName: 'Publish to PyPi through Twine'
