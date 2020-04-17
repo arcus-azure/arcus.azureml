@@ -39,5 +39,5 @@ steps:
   displayName: 'Show pypirc config file'
 
 - script: |
-   python -m twine upload --verbose -p $(pypi-api-token) -u __token__ --repository-url https://upload.pypi.org/legacy dist/*.whl
+   python -m twine upload --verbose -p $(pypi-api-token) -u __token__ --repository arcus-azure --repository-url https://upload.pypi.org/legacy dist/*.whl
   displayName: 'Publish to PyPi through Twine'
