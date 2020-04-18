@@ -40,7 +40,7 @@ steps:
     pip install pytest
     pip install pytest-cov
     pytest src/tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
-  displayName: 'Test with pytest'
+  displayName: 'Unit tests (pytest)'
 
 - task: PublishTestResults@2
   condition: succeededOrFailed()
@@ -55,8 +55,8 @@ steps:
     reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
 - script: |    
-    python src/setup.py sdist 
-  displayName: 'Artifact creation'
+    python src/setup.py bdist_wheel 
+  displayName: 'Build wheels'
 
 - script: python -m pip install --upgrade twine
   displayName: 'Install Twine'
