@@ -44,6 +44,7 @@ stages:
         - script: python -m pip install --upgrade twine
           displayName: 'Install Twine'
   - stage: Build_Test
+    dependsOn: Prereqs
     jobs:
       - job: Set_version_number
         displayName: 'Set dynamic version number'
@@ -56,6 +57,7 @@ stages:
             script: 'sed -i ''s/0.0.2/0.0.2.dev$(Build.BuildNumber)/g'' src/arcus/__init__.py'
             failOnStderr: true
       - job: Run_unit_tests
+        dependsOn: Set_version_number
         displayName: 'Run unit tests'
         pool:
           vmImage: 'ubuntu-latest'
@@ -76,6 +78,7 @@ stages:
             summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
             reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
   - stage: Package_Deploy
+    dependsOn: Build_Test
     jobs:
       - job: Create_package
         displayName: 'Create wheel packages'
@@ -86,6 +89,7 @@ stages:
             python src/setup.py bdist_wheel 
           displayName: 'Build wheels'
       - job: Publish_prerelease_package
+        dependsOn: Create_package
         displayName: 'Create pre release package'
         pool:
           vmImage: 'ubuntu-latest'
@@ -98,6 +102,7 @@ stages:
             python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
           displayName: 'Publish to PyPi dev'
   - stage: Publish_Artifacts
+    dependsOn: Package_Deploy
     jobs:
       - job: Publish
         displayName: 'Publish build artifacts'
