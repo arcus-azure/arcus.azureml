@@ -67,7 +67,7 @@ steps:
 
 - script: |    
     cat $(PYPIRC_PATH)
-  displayName: 'Build wheels'
+  displayName: 'Print pypirc file'
 
 - script: |
    python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
