@@ -17,8 +17,10 @@ pr:
 
 stages:
   - stage: Prereqs
+    displayName: 'Install pre requisites'
     jobs:
       - job: Install
+        displayName: 'Install all python packages'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -43,7 +45,8 @@ stages:
           displayName: 'Install Twine'
   - stage: Build_Test
     jobs:
-      - job: Set version number
+      - job: Set_version_number
+        displayName: 'Set dynamic version number'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -52,7 +55,8 @@ stages:
             targetType: 'inline'
             script: 'sed -i ''s/0.0.2/0.0.2.dev$(Build.BuildNumber)/g'' src/arcus/__init__.py'
             failOnStderr: true
-      - job: Run unit tests
+      - job: Run_unit_tests
+        displayName: 'Run unit tests'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -73,14 +77,16 @@ stages:
             reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
   - stage: Package_Deploy
     jobs:
-      - job: Create package
+      - job: Create_package
+        displayName: 'Create wheel packages'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
         - script: |    
             python src/setup.py bdist_wheel 
           displayName: 'Build wheels'
-      - job: Publish pre-release package
+      - job: Publish_prerelease_package
+        displayName: 'Create pre release package'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
@@ -93,7 +99,8 @@ stages:
           displayName: 'Publish to PyPi dev'
   - stage: Publish_Artifacts
     jobs:
-      - job: Publish release artifacts
+      - job: Publish
+        displayName: 'Publish build artifacts'
         pool:
           vmImage: 'ubuntu-latest'
         steps:
