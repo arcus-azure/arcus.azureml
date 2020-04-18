@@ -23,6 +23,12 @@ steps:
 - script: pip install -r src/requirements.txt
   displayName: 'Install requirements'
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'sed -i ''s/0.0.2/$(Package.Version)/g'' src/arcus/__init__.py'
+    failOnStderr: true
+
 - script: |    
     python src/setup.py bdist_wheel 
   displayName: 'Artifact creation'
@@ -34,10 +40,16 @@ steps:
   inputs:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
-- script: |    
-    cat $(PYPIRC_PATH)
-  displayName: 'Show pypirc file'
-
 - script: |
-   python -m twine upload --skip-existing --verbose --repository $(pypi-project-name) --config-file $(PYPIRC_PATH) dist/*.whl
-  displayName: 'Publish package to PyPi'
+   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
+  displayName: 'Publish to PyPi'
+
+- task: CopyFiles@2  
+  inputs:    
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: PublishBuildArtifacts@1  
+  inputs:    
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
+    ArtifactName: 'dist'    
+    publishLocation: 'Container'
