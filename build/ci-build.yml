@@ -65,6 +65,10 @@ steps:
   inputs:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
+- script: |    
+    cat $(PYPIRC_PATH)
+  displayName: 'Build wheels'
+
 - script: |
    python -m twine upload --skip-existing --verbose --repository $(pypi-project-name) --config-file $(PYPIRC_PATH) dist/*.whl
   displayName: 'Publish to PyPi dev'
