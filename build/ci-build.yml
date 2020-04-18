@@ -24,6 +24,10 @@ steps:
     addToPath: true
     architecture: 'x64'
 
+- task: TwineAuthenticate@1
+  inputs:
+    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
+
 - task: Bash@3
   inputs:
     targetType: 'inline'
@@ -60,10 +64,6 @@ steps:
 
 - script: python -m pip install --upgrade twine
   displayName: 'Install Twine'
-
-- task: TwineAuthenticate@1
-  inputs:
-    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
 - script: |
    python -m twine upload --skip-existing --verbose --repository $(pypi-project-name) --config-file $(PYPIRC_PATH) dist/*.whl
