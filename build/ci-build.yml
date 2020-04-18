@@ -16,7 +16,7 @@ pr:
 
 
 stages:
-  - stage: Prereqs
+  - stage: Build_Test
     displayName: 'Install pre requisites'
     jobs:
       - job: Install
@@ -38,10 +38,8 @@ stages:
 
         - script: python -m pip install --upgrade twine
           displayName: 'Install Twine'
-  - stage: Build_Test
-    dependsOn: Prereqs
-    jobs:
       - job: Set_version_number
+        dependsOn: Install
         displayName: 'Set dynamic version number'
         pool:
           vmImage: 'ubuntu-latest'
