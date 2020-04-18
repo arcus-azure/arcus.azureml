@@ -24,6 +24,12 @@ steps:
     addToPath: true
     architecture: 'x64'
 
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'sed -i ''s/0.0.2/0.0.3/g'' src/arcus/__init__.py'
+    failOnStderr: true
+    
 - script: python -m pip install --upgrade pip setuptools wheel
   displayName: 'Install tools'
 
@@ -51,6 +57,17 @@ steps:
 - script: |    
     python src/setup.py sdist 
   displayName: 'Artifact creation'
+
+- script: python -m pip install --upgrade twine
+  displayName: 'Install Twine'
+
+- task: TwineAuthenticate@1
+  inputs:
+    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
+
+- script: |
+   python -m twine upload --skip-existing --verbose --repository $(pypi-project-name) --config-file $(PYPIRC_PATH) dist/*.whl
+  displayName: 'Publish to PyPi through Twine'
 
 - task: CopyFiles@2  
   inputs:    
