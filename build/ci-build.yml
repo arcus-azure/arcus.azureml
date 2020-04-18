@@ -14,71 +14,94 @@ pr:
     - src/*
     - build/ci-build.yml
 
-pool:
-  vmImage: 'ubuntu-latest'
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.7'
-    addToPath: true
-    architecture: 'x64'
+stages:
+  - stage: Prereqs
+    jobs:
+      - job: Install
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '3.7'
+            addToPath: true
+            architecture: 'x64'
 
-- task: Bash@3
-  inputs:
-    targetType: 'inline'
-    script: 'sed -i ''s/0.0.2/0.0.2.dev$(Build.BuildNumber)/g'' src/arcus/__init__.py'
-    failOnStderr: true
-    
-- script: python -m pip install --upgrade pip setuptools wheel
-  displayName: 'Install tools'
+        - script: python -m pip install --upgrade pip setuptools wheel
+          displayName: 'Install tools'
 
-- script: pip install -r src/requirements.txt
-  displayName: 'Install requirements'
+        - script: pip install -r src/requirements.txt
+          displayName: 'Install requirements'
 
-- script: |
-    pip install pytest
-    pip install pytest-cov
-    pytest src/tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
-  displayName: 'Unit tests (pytest)'
+        - script: |
+            pip install pytest
+            pip install pytest-cov
+          displayName: 'Install pytest'
 
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  inputs:
-    testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results for Python $(python.version)'
+        - script: python -m pip install --upgrade twine
+          displayName: 'Install Twine'
+  - stage: Build_Test
+    jobs:
+      - job: Set version number
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - task: Bash@3
+          inputs:
+            targetType: 'inline'
+            script: 'sed -i ''s/0.0.2/0.0.2.dev$(Build.BuildNumber)/g'' src/arcus/__init__.py'
+            failOnStderr: true
+      - job: Run unit tests
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - script: |
+            pytest src/tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
+          displayName: 'Unit tests (pytest)'
 
-- task: PublishCodeCoverageResults@1
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+        - task: PublishTestResults@2
+          condition: succeededOrFailed()
+          inputs:
+            testResultsFiles: '**/test-*.xml'
+            testRunTitle: 'Publish test results for Python $(python.version)'
 
-- script: |    
-    python src/setup.py bdist_wheel 
-  displayName: 'Build wheels'
+        - task: PublishCodeCoverageResults@1
+          inputs:
+            codeCoverageTool: Cobertura
+            summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+            reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+  - stage: Package_Deploy
+    jobs:
+      - job: Create package
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - script: |    
+            python src/setup.py bdist_wheel 
+          displayName: 'Build wheels'
+      - job: Publish pre-release package
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - task: TwineAuthenticate@1
+          inputs:
+            pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
-- script: python -m pip install --upgrade twine
-  displayName: 'Install Twine'
-
-- task: TwineAuthenticate@1
-  inputs:
-    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
-
-- script: |    
-    cat $(PYPIRC_PATH)
-  displayName: 'Print pypirc file'
-
-- script: |
-   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
-  displayName: 'Publish to PyPi dev'
-
-- task: CopyFiles@2  
-  inputs:    
-    targetFolder: $(Build.ArtifactStagingDirectory)
-
-- task: PublishBuildArtifacts@1  
-  inputs:    
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
-    ArtifactName: 'dist'    
-    publishLocation: 'Container'
+        - script: |
+            python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
+          displayName: 'Publish to PyPi dev'
+  - stage: Publish_Artifacts
+    jobs:
+      - job: Publish release artifacts
+        pool:
+          vmImage: 'ubuntu-latest'
+        steps:
+        - task: CopyFiles@2  
+          inputs:    
+            targetFolder: $(Build.ArtifactStagingDirectory)
+        - task: PublishBuildArtifacts@1  
+          inputs:    
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
+            ArtifactName: 'dist'    
+            publishLocation: 'Container'
