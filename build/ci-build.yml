@@ -70,7 +70,7 @@ steps:
   displayName: 'Build wheels'
 
 - script: |
-   python -m twine upload --skip-existing --verbose --repository $(pypi-project-name) --config-file $(PYPIRC_PATH) dist/*.whl
+   python -m twine upload --skip-existing --verbose -r $(pypi-endpoint-name) --config-file $(PYPIRC_PATH) dist/*.whl
   displayName: 'Publish to PyPi dev'
 
 - task: CopyFiles@2  
