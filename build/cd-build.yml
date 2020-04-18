@@ -36,4 +36,4 @@ steps:
 
 - script: |
    python -m twine upload --skip-existing --verbose --repository $(pypi-project-name) --config-file $(PYPIRC_PATH) dist/*.whl
-  displayName: 'Publish to PyPi through Twine'
+  displayName: 'Publish dev package to PyPi'
