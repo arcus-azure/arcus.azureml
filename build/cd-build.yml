@@ -4,9 +4,9 @@
 # Add steps that build, run tests, deploy, and more:
 # https://aka.ms/yaml
 
-trigger:
-- master
+trigger: none
 pr: none
+
 pool:
   vmImage: 'ubuntu-latest'
 
@@ -24,9 +24,10 @@ steps:
   displayName: 'Install requirements'
 
 - task: Bash@3
+  displayName: 'Update version number'
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/0.0.2/$(Package.Version)/g'' src/arcus/__init__.py'
+    script: 'sed -i ''s/1.0.0/$(Package.Version)/g'' src/arcus/__init__.py'
     failOnStderr: true
 
 - script: |    
