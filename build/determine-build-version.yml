@@ -24,15 +24,17 @@ steps:
 
     if('$(Build.Reason)' -eq 'PullRequest') {
         Write-Host "Overriding package version given it's a PR build"
-
         $pullRequestNumber= "$(System.PullRequest.PullRequestNumber)"
         $pullRequestString = '{0:d4}' -f [int]$pullRequestNumber
         Write-Host "PR Number = $pullRequestNumber"
         $dateFormat = Get-Date -UFormat "%Y%m%d"
-        $packageVersion = "$dateFormat$pullRequestString"
-        Write-Host "Updated build number = $packageVersion"
+        $packageVersion = "dev$dateFormat$pullRequestString"
+    } elseif('$(Build.Reason)' -eq 'IndividualCI') {
+        Write-Host "Overriding package version given it's a master build"
+        $packageVersion = '$(Build.BuildNumber)';
+        $packageVersion = "alpha$packageVersion"
     } else {
-        $packageVersion = "$packageVersion-${{ parameters.manualTriggerVersion }}"
+        $packageVersion = "packageVersion-${{ parameters.manualTriggerVersion }}"
     }
 
     Write-Host "Package version = $packageVersion"
