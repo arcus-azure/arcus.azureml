@@ -30,6 +30,7 @@ steps:
         Write-Host "PR Number = $pullRequestNumber"
         $dateFormat = Get-Date -UFormat "%Y%m%d"
         $packageVersion = "$dateFormat_$pullRequestString"
+        Write-Host "Updated build number = $packageVersion"
     } else {
         $packageVersion = "$packageVersion-${{ parameters.manualTriggerVersion }}"
     }
