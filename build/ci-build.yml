@@ -25,7 +25,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- template: 'pypi/determine-pr-version.yml@templates'
+- template: 'determine-pr-version.yml'
   parameters:
     manualTriggerVersion: preview
 
