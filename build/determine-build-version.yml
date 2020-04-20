@@ -26,9 +26,10 @@ steps:
         Write-Host "Overriding package version given it's a PR build"
 
         $pullRequestNumber= "$(System.PullRequest.PullRequestNumber)"
+        $pullRequestString = '{0:d4}' -f [int]$pullRequestNumber
         Write-Host "PR Number = $pullRequestNumber"
         $dateFormat = Get-Date -UFormat "%Y%m%d"
-        $packageVersion = "$dateFormat-$pullRequestNumber"
+        $packageVersion = "$dateFormat$pullRequestString"
     } else {
         $packageVersion = "$packageVersion-${{ parameters.manualTriggerVersion }}"
     }
