@@ -25,7 +25,7 @@ pool:
   vmImage: 'ubuntu-latest'
 
 steps:
-- template: 'determine-build-version.yml'
+- template: 'pypi/determine-pr-version.yml@templates'
   parameters:
     manualTriggerVersion: preview
 
@@ -36,9 +36,10 @@ steps:
     architecture: 'x64'
 
 - task: Bash@3
+  displayName: 'Update version number'
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/0.0.2/0.0.2.dev$(Build.BuildNumber)/g'' src/arcus/__init__.py'
+    script: 'sed -i ''s/1.0.0/1.0.0.dev$(Build.BuildNumber)/g'' src/arcus/__init__.py'
     failOnStderr: true
     
 - script: python -m pip install --upgrade pip setuptools wheel
