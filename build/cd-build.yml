@@ -1,0 +1,55 @@
+# Starter pipeline
+
+# Start with a minimal pipeline that you can customize to build and deploy your code.
+# Add steps that build, run tests, deploy, and more:
+# https://aka.ms/yaml
+
+trigger:
+- master
+pr: none
+pool:
+  vmImage: 'ubuntu-latest'
+
+steps:
+- task: UsePythonVersion@0
+  inputs:
+    versionSpec: '3.7'
+    addToPath: true
+    architecture: 'x64'
+
+- script: python -m pip install --upgrade pip setuptools wheel
+  displayName: 'Install tools'
+
+- script: pip install -r src/requirements.txt
+  displayName: 'Install requirements'
+
+- task: Bash@3
+  inputs:
+    targetType: 'inline'
+    script: 'sed -i ''s/0.0.2/$(Package.Version)/g'' src/arcus/__init__.py'
+    failOnStderr: true
+
+- script: |    
+    python src/setup.py bdist_wheel 
+  displayName: 'Artifact creation'
+
+- script: python -m pip install --upgrade twine
+  displayName: 'Install Twine'
+
+- task: TwineAuthenticate@1
+  inputs:
+    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
+
+- script: |
+   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
+  displayName: 'Publish to PyPi'
+
+- task: CopyFiles@2  
+  inputs:    
+    targetFolder: $(Build.ArtifactStagingDirectory)
+
+- task: PublishBuildArtifacts@1  
+  inputs:    
+    PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
+    ArtifactName: 'dist'    
+    publishLocation: 'Container'
