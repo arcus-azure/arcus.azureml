@@ -14,10 +14,21 @@ pr:
     - src/*
     - build/ci-build.yml
 
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: arcus-azure/azure-devops-templates
+      endpoint: arcus-azure
+
 pool:
   vmImage: 'ubuntu-latest'
 
 steps:
+- template: 'nuget/determine-pr-version.yml@templates'
+  parameters:
+    manualTriggerVersion: preview
+
 - task: UsePythonVersion@0
   inputs:
     versionSpec: '3.7'
