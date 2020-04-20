@@ -1,6 +1,6 @@
 # Arcus - Azure Azure Machine Learning
 [![Build Status](https://dev.azure.com/codit/Arcus/_apis/build/status/Commit%20builds/CI%20-%20Arcus.AzureML?branchName=master)](https://dev.azure.com/codit/Arcus/_build/latest?definitionId=833&branchName=master)
-[![PyPI version](https://badge.fury.io/py/arcus-azure-ml.svg)](https://badge.fury.io/py/arcus-azure-ml)
+[![PyPI version](https://badge.fury.io/py/arcus-azureml.svg)](https://badge.fury.io/py/arcus-azureml)
 
 Azure Machine Learning development in a breeze.
 
@@ -9,7 +9,7 @@ Azure Machine Learning development in a breeze.
 # Installation
 
 ```shell
-PM > pip3 install arcus-azure-ml
+PM > pip3 install arcus-azureml
 ```
 
 # Documentation
