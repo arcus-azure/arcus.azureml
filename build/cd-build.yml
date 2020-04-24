@@ -27,7 +27,7 @@ steps:
   displayName: 'Update version number'
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/1.0.0/$(Package.Version)/g'' arcus/__init__.py'
+    script: 'sed -i ''s/1.0.0/$(Package.Version)/g'' arcus/azureml/__init__.py'
     failOnStderr: true
 
 - script: |    
