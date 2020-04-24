@@ -6,12 +6,12 @@ trigger:
     - master
   paths:
     include:
-    - src/*
+    - arcus/*
 
 pr:
   paths:
     include:
-    - src/*
+    - arcus/*
     - build/ci-build.yml
 
 resources:
@@ -39,19 +39,19 @@ steps:
   displayName: 'Update version number'
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/1.0.0/1.0.0.$(Build.BuildNumber)/g'' src/arcus/__init__.py'
+    script: 'sed -i ''s/1.0.0/1.0.0.$(Build.BuildNumber)/g'' arcus/azureml/__init__.py'
     failOnStderr: true
     
 - script: python -m pip install --upgrade pip setuptools wheel
   displayName: 'Install tools'
 
-- script: pip install -r src/requirements.txt
+- script: pip install -r requirements.txt
   displayName: 'Install requirements'
 
 - script: |
     pip install pytest
     pip install pytest-cov
-    pytest src/tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
+    pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
   displayName: 'Unit tests (pytest)'
 
 - task: PublishTestResults@2
@@ -67,7 +67,7 @@ steps:
     reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
 - script: |    
-    python src/setup.py bdist_wheel 
+    python setup.py bdist_wheel 
   displayName: 'Build wheels'
 
 - script: python -m pip install --upgrade twine
