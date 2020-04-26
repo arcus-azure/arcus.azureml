@@ -5,12 +5,8 @@ The projectutils module provides common operations related to data/ai projects
 import os
 
 def initProjectStructure():
-    '''Creates the folders to start a the Data/AI Project that facilitates Azure MLOps
+    '''Creates the folders to start a Data/AI Project that leverages Azure MLOps
        Skips folder creation if folder already exists. 
-    Args:
-        No Arguments
-    Returns: 
-        Void in case of success and throws an error if the directory creation fails.
     '''
     folderNames = ['config','notebook','data','script','output/model','output/script']
     currentPath = os.getcwd()
