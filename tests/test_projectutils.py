@@ -2,7 +2,7 @@ import os
 import pathlib
 import shutil
 import logging
-from arcus.azureml.projectutils import init_project_structure
+from arcus.azureml.projectutils import *
 tmpTestPath = os.path.join(os.getcwd(), 'pytestTempFolder')
 
 def create_temp_testpath():
@@ -27,3 +27,6 @@ def test_init_project_structure():
    assert(countRootFolder==1 and countFolders==5)
    os.chdir(testRootPath)
    shutil.rmtree(tmpTestPath)
+
+def test_connect_azuremlworkspace():
+   connect_azuremlworkspace('c1537527-c126-428d-8f72-1ac9f2c63c1f','codit-ai-incubators','codit-ai-incubators-ml')
