@@ -2,7 +2,7 @@ import os
 import pathlib
 import shutil
 import logging
-from arcus.azureml.projectutils import init_project_structure
+from arcus.azureml.projectutils import *
 tmpTestPath = os.path.join(os.getcwd(), 'pytestTempFolder')
 
 def create_temp_testpath():
