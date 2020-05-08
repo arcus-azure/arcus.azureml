@@ -1,4 +1,5 @@
 import arcus.azureml.environment.workenvironment as wenv
+import os
 
 def is_interactive():
     # If the environment variable System_DefinitionId is not available, we run locally
