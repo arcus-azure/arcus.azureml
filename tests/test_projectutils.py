@@ -3,27 +3,66 @@ import pathlib
 import shutil
 import logging
 from arcus.azureml.projectutils import *
-tmpTestPath = os.path.join(os.getcwd(), 'pytestTempFolder')
 
+logger = logging.getLogger()
+tmp_test_path = os.path.join(os.getcwd(), 'pytestTempFolder')
+test_root_path = os.getcwd()
+test_foldername = 'src'
+
+#Internal method to create the temporary test directory
 def create_temp_testpath():
-   if os.path.exists(tmpTestPath):
-      shutil.rmtree(tmpTestPath)
-   os.mkdir(tmpTestPath)
-   os.chdir(tmpTestPath)
+   if os.path.exists(tmp_test_path):
+      shutil.rmtree(tmp_test_path)
+   os.mkdir(tmp_test_path)
+   os.chdir(tmp_test_path)
 
-def test_init_project_structure():
-   logger = logging.getLogger()
-   test_folderName = "sample"   
-   testRootPath = os.getcwd()
+#Internal method to remove the temporary test directory
+def remove_temp_testpath():
+   os.chdir(test_root_path)
+   shutil.rmtree(tmp_test_path)
+
+#Call init_project_structure(root_folder) with root_folder as 'src'
+def test_initprojectstructure_with_rootfolder():          
    create_temp_testpath()
-   init_project_structure(test_folderName)
-   os.chdir(tmpTestPath)
-   countRootFolder = len(next(os.walk(tmpTestPath))[1])
-   logger.info(countRootFolder)
-   newSamplePath = os.path.join(tmpTestPath,test_folderName)
-   os.chdir(newSamplePath)
-   countFolders = len(next(os.walk(newSamplePath))[1])
-   logger.info(countFolders)
-   assert(countRootFolder==1 and countFolders==5)
-   os.chdir(testRootPath)
-   shutil.rmtree(tmpTestPath)
+   init_project_structure(test_foldername)   
+   count_rootfolder = len(next(os.walk(tmp_test_path))[1])
+   logger.info(count_rootfolder)
+   new_sample_path = os.path.join(tmp_test_path,test_foldername)   
+   count_folders = len(next(os.walk(new_sample_path))[1])
+   logger.info(count_folders)
+   assert(count_rootfolder==1 and count_folders==5)
+   remove_temp_testpath()
+
+#Call init_project_structure(root_folder) without root_folder
+def test_initprojectstructure_empty_rootfolder():   
+   create_temp_testpath() 
+   init_project_structure()
+   count_folders = len(next(os.walk(tmp_test_path))[1])   
+   logger.info(count_folders)
+   assert(count_folders==5)
+   remove_temp_testpath()
+
+#Call init_project_structure(root_folder) multiple times and check folders created
+def test_initprojectstructure_multipletimes():         
+   create_temp_testpath()
+   init_project_structure(test_foldername)
+   init_project_structure(test_foldername)
+   init_project_structure(test_foldername)
+   count_rootfolder = len(next(os.walk(tmp_test_path))[1])
+   logger.info(count_rootfolder)
+   new_sample_path = os.path.join(tmp_test_path,test_foldername)   
+   count_folders = len(next(os.walk(new_sample_path))[1])
+   logger.info(count_folders)
+   assert(count_rootfolder==1 and count_folders==5)
+   remove_temp_testpath()
+
+#Call init_project_structure(root_folder) and check if the currentdirectory is the same
+def test_initprojectstructure_currdir_check():   
+   create_temp_testpath()   
+   currdir_before = os.getcwd()
+   #logger.info(currdir_before)   
+   init_project_structure()
+   currdir_after = os.getcwd()
+   #logger.info(currdir_after)
+   assert(currdir_before,currdir_after)
+   remove_temp_testpath()
