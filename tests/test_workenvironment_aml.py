@@ -1,6 +1,10 @@
+import os
+from arcus.azureml.environment.workenvironment import WorkEnvironment
+from collections import Counter
 
 def is_interactive():
-    return True
+    # If the environment variable System_DefinitionId is not available, we run locally
+    return 'SYSTEM_DEFINITIONID' not in os.environ
 
 def setup_function(func):
     if not is_interactive():
@@ -8,8 +12,7 @@ def setup_function(func):
         pytest.skip('Test only runs when interactive mode enable')
 
 
-from arcus.azureml.environment.workenvironment import WorkEnvironment
-from collections import Counter
+
 
 datastore_name = 'smart_devops'
 partitioned_datastore_name = 'aiincubators_covid'

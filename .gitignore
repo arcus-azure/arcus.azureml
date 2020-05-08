@@ -136,4 +136,7 @@ src/dist/
 src/build/
 *.egg-info
 .pytest_cache/
-.vscode/
+.vscode/*
+.azureml/*
+.vscode/settings.json
+.azureml/config.json

@@ -1,7 +1,7 @@
 {
     "python.testing.pytestArgs": [
         "."
-        //,"--log-cli-level", "INFO" //Enable to have pytest logs in the output terminal
+        //,"--log-cli-level", "INFO" //Enable to have pytest logs in the output terminal 
     ],
     "python.testing.unittestEnabled": false,
     "python.testing.nosetestsEnabled": false,
