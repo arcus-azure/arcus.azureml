@@ -137,3 +137,4 @@ src/build/
 *.egg-info
 .pytest_cache/
 .vscode/
+.azureml/
