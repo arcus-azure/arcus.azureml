@@ -5,6 +5,7 @@ import os
 import pandas as pd
 import glob
 import numpy as np
+from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
 
 class WorkEnvironment:
     is_connected: bool = False
@@ -93,7 +94,7 @@ class WorkEnvironment:
             _file_name = os.path.join(self.__datastore_path, dataset_name + '.csv')
             return pd.read_csv(_file_name)
 
-    def load_tabular_partition(self, partition_name: str, datastore_name: str = None, columns: np.array = None) -> pd.DataFrame:
+    def load_tabular_partition(self, partition_name: str, datastore_name: str = None, columns: np.array = None, first_row_header: bool = False) -> pd.DataFrame:
         '''
         Loads a partition from a tabular dataset.
             When working locally: the implementation will append all files in the datastore_path with name {partition_name}.csv
@@ -114,26 +115,39 @@ class WorkEnvironment:
         if self.is_connected:
             # Connecting data store
             datastore = Datastore(self.__workspace, name=datastore_name)
-            _aml_dataset = Dataset.Tabular.from_delimited_files(header=False,
-                path=DataPath(datastore, '/' + partition_name + '.csv')) #, set_column_types=columns
-            _df = _aml_dataset.to_pandas_dataframe()
+            try:
+                _aml_dataset = Dataset.Tabular.from_delimited_files(header=False,
+                    path=DataPath(datastore, '/' + partition_name + '.csv')) #, set_column_types=columns
+                _df = _aml_dataset.to_pandas_dataframe()
+            except DatasetValidationError as dsvalex:
+                if 'provided path is not valid' in dsvalex.Value:
+                    return None
+                else:
+                    raise
             if columns != None:
                 _df.columns = columns
             return _df
 
         else:
             # Reading data from sub files in a folder
-            _folder_path = os.path.join(self.__datastore_path, datastore_name)
+            _folder_path = datastore_name
             _partition_files = glob.glob(_folder_path + '/' + partition_name + '*.csv')
-            _dfs = []
+            _record_found = False
+            _result = None
             for filename in _partition_files:
-                df = pd.read_csv(filename, index_col=None, header=0)
-                _dfs.append(df)
+                _header = 0 if first_row_header else None
+                df = pd.read_csv(filename, index_col=None, header=_header)
+                if not _record_found:
+                    _result = df
+                    _record_found = True
+                else:
+                    _result = _result.append(df)
 
-            _df = pd.concat(_dfs, axis=0, ignore_index=True)
-            if columns != None:
-                _df.columns = columns
-            return _df
+            if not _record_found:
+                return None
+            if columns:
+                _result.columns = columns
+            return _result
 
     def __isvalid(self) -> bool:
         return True
