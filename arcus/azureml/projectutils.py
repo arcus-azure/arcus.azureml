@@ -2,6 +2,7 @@
 The projectutils module provides common operations related to data/ai projects
 '''
 import os
+from azureml.core import Workspace
 
 def init_project_structure(root_folder:str = None):
     '''Creates the folders to start a the Data/AI Project that leverages Azure MLOps
