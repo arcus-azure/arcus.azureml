@@ -24,13 +24,15 @@ class AzureMLTrainer(trainer.Trainer):
         self.__experiment = Experiment(workspace=self.__workspace, name=experiment_name)
 
     def new_run(self, description: str = None) -> Run:
+        if(self.__current_run is not None):
+            self.__current_run.complete()
         self.__current_run = self.__experiment.start_logging()
         if(description is not None):
             self.__current_run.log('Description', description)
         
         return self.__current_run
 
-    def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, class_names: np.array = None) -> np.array:
+    def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, class_names: np.array = None, finish_existing_run: bool = True) -> np.array:
         y_pred = fitted_model.predict(X_test)
         if class_names is None:
             class_names = np.char.mod('%d', sorted(np.unique(y_test)))
@@ -50,6 +52,9 @@ class AzureMLTrainer(trainer.Trainer):
                 raise AttributeError('Showing a ROC curve is only possible for binary classifier, not for multi class')
             self.__log_roc_curve(y_test, y_pred) 
         
+        if (finish_existing_run and self.__current_run is not None):
+            self.__current_run.complete(True)
+
         return y_pred
 
     def __log_confmatrix(self, confusion_matrix: np.array, class_names: np.array):
@@ -61,7 +66,6 @@ class AzureMLTrainer(trainer.Trainer):
         data['data']['matrix'] = confusion_matrix.tolist()
 
         json_data = json.dumps(data)
-        print(json_data)
         self.__current_run.log_confusion_matrix('Confusion matrix', json_data, description='')
 
     def __log_roc_curve(self, y_pred: np.array, y_test: np.array):
@@ -86,5 +90,10 @@ class AzureMLTrainer(trainer.Trainer):
         plt.ylim([0, 1])
         plt.ylabel('True Positive Rate')
         plt.xlabel('False Positive Rate')
-        plt.show()
+        #plt.show()
+        #figure_name = self.__current_run.id + '_roc.png'
+        #plt.savefig(figure_name)
+        self.__current_run.log('roc_uac', roc_auc)
+        self.__current_run.log_image('ROC Curve', plot=plt)
+
         return roc_auc
