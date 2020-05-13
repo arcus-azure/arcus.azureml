@@ -3,11 +3,11 @@ import pandas as pd
 import numpy as np
 from azureml.core import Workspace, Dataset, Datastore
 from azureml.data.datapath import DataPath
-import os
-import glob
 from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
 from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
-
+import os
+import glob
+from arcus.azureml.experimenting import trainer
 
 class WorkEnvironment:
     __metaclass__ = ABCMeta
@@ -22,4 +22,8 @@ class WorkEnvironment:
 
     @abstractmethod
     def isvalid(self) -> bool:
+        raise NotImplementedError
+
+    @abstractmethod
+    def start_experiment(self, name: str) -> trainer.Trainer:
         raise NotImplementedError

@@ -8,6 +8,8 @@ import glob
 from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
 from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
 import arcus.azureml.environment.environment as env
+from arcus.azureml.experimenting import trainer
+from arcus.azureml.experimenting import aml_trainer
 
 class AzureMLEnvironment(env.WorkEnvironment):
     is_connected: bool = False
@@ -100,4 +102,5 @@ class AzureMLEnvironment(env.WorkEnvironment):
         print('>> Subscription:', self.__workspace.subscription_id)
         print('>> Resource group:', self.__workspace.resource_group)
 
-
+    def start_experiment(self, name: str) -> trainer.Trainer:
+        return aml_trainer.AzureMLTrainer(name, self.__workspace)
