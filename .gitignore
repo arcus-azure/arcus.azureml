@@ -136,12 +136,7 @@ src/dist/
 src/build/
 *.egg-info
 .pytest_cache/
-<<<<<<< HEAD
-.vscode/*
-.azureml/*
-.vscode/settings.json
-.azureml/config.json
-=======
 .vscode/
 .azureml/
->>>>>>> eef3d66f8f8786d2c761579018e01a6a8dcb0d2d
+samples/script_file.py
+samples/outputs/

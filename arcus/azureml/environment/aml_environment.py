@@ -92,8 +92,23 @@ class AzureMLEnvironment(env.WorkEnvironment):
             _df.columns = columns
         return _df
 
+    def start_experiment(self, name: str) -> trainer.Trainer:
+        '''
+        Creates a new experiment (or connects to an existing one), using the give name
+
+        Args:
+            name (str): the name of the experiment which whill be used in AzureML
+        Returns:
+            Trainer: a Trainer object that can be used to perform trainings and add logging in AzureML
+
+        '''
+        return aml_trainer.AzureMLTrainer(name, self.__workspace)
+
     def isvalid(self) -> bool:
         return True
+
+    def get_azureml_workspace(self):
+        return self.__workspace
 
     def __connect_from_config_file(self, file_name:str):
         self.__workspace = Workspace.from_config(_file_name=file_name)
@@ -102,5 +117,3 @@ class AzureMLEnvironment(env.WorkEnvironment):
         print('>> Subscription:', self.__workspace.subscription_id)
         print('>> Resource group:', self.__workspace.resource_group)
 
-    def start_experiment(self, name: str) -> trainer.Trainer:
-        return aml_trainer.AzureMLTrainer(name, self.__workspace)
