@@ -10,6 +10,8 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 from tqdm import tqdm
+from itertools import product, combinations
+from logging import Logger
 
 class AzureMLTrainer(trainer.Trainer):
     is_connected: bool = False
@@ -18,6 +20,7 @@ class AzureMLTrainer(trainer.Trainer):
     __experiment: Experiment = None
     __current_experiment_name: str
     __current_run: Run = None
+    __logger: Logger = None
 
     def __init__(self, experiment_name: str, aml_workspace: Workspace):
         '''
@@ -28,7 +31,7 @@ class AzureMLTrainer(trainer.Trainer):
         '''
         self.__workspace = aml_workspace
         self.__current_experiment_name = experiment_name
-
+        self.__logger = logging.getLogger()
         self.__experiment = Experiment(workspace=self.__workspace, name=experiment_name)
 
     def new_run(self, description: str = None) -> Run:
@@ -91,6 +94,12 @@ class AzureMLTrainer(trainer.Trainer):
             self.__current_run.complete(True)
 
         return y_pred
+
+    def grid_search(self, model, hyper_parameters: dict, X_train: np.array, y_train: np.array, X_test: np.array, y_test: np.array, constructor_parameters: dict = None, validation_method = None, use_aml_compute: bool = False, take_highest:bool = True):
+        if (use_aml_compute):
+            raise NotImplementedError
+        else:
+            return self.__grid_search_local(model, hyper_parameters, X_train, y_train, X_test, y_test, constructor_parameters, validation_method, take_highest)
 
     def get_best_model(self, metric_name:str, take_highest:bool = True):
         '''
