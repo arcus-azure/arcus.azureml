@@ -4,3 +4,4 @@ azureml-core
 tqdm
 joblib
 scikit-learn
+matplotlib
