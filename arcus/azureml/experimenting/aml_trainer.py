@@ -10,6 +10,10 @@ import matplotlib.pyplot as plt
 import numpy as np
 import json
 from tqdm import tqdm
+from itertools import product, combinations
+from logging import Logger
+import logging
+import sys
 
 class AzureMLTrainer(trainer.Trainer):
     is_connected: bool = False
@@ -18,6 +22,7 @@ class AzureMLTrainer(trainer.Trainer):
     __experiment: Experiment = None
     __current_experiment_name: str
     __current_run: Run = None
+    __logger: Logger = None
 
     def __init__(self, experiment_name: str, aml_workspace: Workspace):
         '''
@@ -28,69 +33,64 @@ class AzureMLTrainer(trainer.Trainer):
         '''
         self.__workspace = aml_workspace
         self.__current_experiment_name = experiment_name
-
+        self.__logger = logging.getLogger()
         self.__experiment = Experiment(workspace=self.__workspace, name=experiment_name)
 
-    def new_run(self, description: str = None) -> Run:
+    def new_run(self, description: str = None, copy_folder: bool = True, metrics: dict = None) -> Run:
         '''
         This will begin a new interactive run on the existing AzureML Experiment.  When a previous run was still active, it will be completed.
         Args:
             description (str): An optional description that will be added to the run metadata
+            copy_folder (bool): Indicates if the output folder should be snapshotted and persisted
+            metrics (dict): The metrics that should be logged in the run already
         Returns:
             Run: the AzureML Run object that can be used for further access and custom logic
         '''
         if(self.__current_run is not None):
             self.__current_run.complete()
-        self.__current_run = self.__experiment.start_logging()
+        if(copy_folder):
+            self.__current_run = self.__experiment.start_logging()
+        else:
+            self.__current_run = self.__experiment.start_logging(snapshot_directory = None)
+
+        if(metrics is not None):
+            for k, v in metrics.items():
+                self.__current_run.log(k, v)
+
         if(description is not None):
             self.__current_run.log('Description', description)
         
         return self.__current_run
 
-    def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, 
-                            class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True) -> np.array:
+    def add_tuning_result(self, run_index: int, train_score: float, test_score: float, sample_count: int, durations:np.array, parameters: dict, estimator):
         '''
-        Will predict and evaluate a model against a test set and save all results to the active Run on AzureML
+        This add results of a cross validation fold to the child run in a Grid Search
         Args:
-            fitted_model (model): The already fitted model to be tested.  Sklearn and Keras models have been tested
-            X_test (np.array): The test set to calculate the predictions with
-            y_test (np.array): The output test set to evaluate the predictions against
-            show_roc (bool): This will upload the ROC curve to the run in case of a binary classifier
-            class_names (np.array): The class names that will be linked to the Confusion Matrix.  If not provided, the unique values of the y_test matrix will be used
-            finish_existing_run (bool): Will complete the existing run on AzureML (defaults to True)
-            upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
-        Returns: 
-            np.array: The predicted (y_pred) values against the model
+            train_score (float): The given score of the training data
+            test_score (float): The given score of the test data
+            sample_count (int): The number of samples that were part of a fold
+            durations (np.array): The different durations of the Grid Search
+            parameters (dict): The parameter combinations that have been tested in this cross validation fold
+            estimate (model): The actual fitted estimator / model that was trained in this fold
         '''
-        y_pred = fitted_model.predict(X_test)
-        if class_names is None:
-            class_names = np.char.mod('%d', sorted(np.unique(y_test)))
+        _child_run = self.__current_run.child_run('Gridsearch' + str(run_index))
+        self.__current_run.log_row('Trainscore', score = train_score)
+        self.__current_run.log_row('Testscore', score = test_score)
 
-        print(metrics.classification_report(y_test, y_pred))
+        _table = {
+            'Testing score': test_score,
+            'Training score': train_score
+            }
 
-        cf = metrics.confusion_matrix(y_test, y_pred)
-        self.__log_confmatrix(cf, class_names)
-        print(cf)
-        accuracy = metrics.accuracy_score(y_test, y_pred) * 100
-        self.__current_run.log('accuracy', accuracy, description='')
-        print('Accuracy score:', accuracy) 
-
-        if(show_roc == True):
-            # Verify that we are having a binary classifier
-            if(len(fitted_model.classes_)!=2):
-                raise AttributeError('Showing a ROC curve is only possible for binary classifier, not for multi class')
-            self.__log_roc_curve(y_test, y_pred) 
-
-        if upload_model:
-            # Save the model to the outputs directory for capture
-            model_file_name = 'outputs/model.pkl'
-            joblib.dump(value = fitted_model, filename = model_file_name)
-            self.__current_run.upload_file(name = model_file_name, path_or_stream = model_file_name)
-
-        if (finish_existing_run and self.__current_run is not None):
-            self.__current_run.complete(True)
-
-        return y_pred
+        for k in parameters.keys():
+            v = parameters[k]
+            if(v is None):
+                v = 'None'
+            _child_run.log(k, v)
+            _table[k] = v
+        
+        self.__current_run.log_row('Results', '', **_table)
+        _child_run.complete()
 
     def get_best_model(self, metric_name:str, take_highest:bool = True):
         '''
@@ -121,44 +121,29 @@ class AzureMLTrainer(trainer.Trainer):
             Experiment: the existing experiment
         '''
         return self.__experiment
+        
+    def _log_metrics(self, metric_name: str, metric_value: float, description:str = None):
+        print(metric_name, metric_value) 
 
-    def __log_confmatrix(self, confusion_matrix: np.array, class_names: np.array):
+        self.__current_run.log(metric_name, metric_value, description=description)
+
+    
+    def _complete_run(self):
+        self.__current_run.complete()
+
+    def _log_confmatrix(self, confusion_matrix: np.array, class_names: np.array):
         data = {}
         data['schema_type'] = 'confusion_matrix'
         data['schema_version'] = 'v1'
         data['data'] = {}
         data['data']['class_labels'] = class_names.tolist()
         data['data']['matrix'] = confusion_matrix.tolist()
+        
+        print(confusion_matrix)
 
         json_data = json.dumps(data)
         self.__current_run.log_confusion_matrix('Confusion matrix', json_data, description='')
 
-    def __log_roc_curve(self, y_pred: np.array, y_test: np.array):
-        '''Will upload the Receiver Operating Characteristic (ROC) Curve for binary classifiers
-
-        Args:
-            y_pred (np.array): The predicted values of the test set 
-            y_test (np.array): The actual outputs of the test set
-
-        Returns: 
-            float: The ROC_AUC value
-        '''
-        # calculate the fpr and tpr for all thresholds of the classification
-        fpr, tpr, threshold = metrics.roc_curve(y_test, y_pred)
-        roc_auc = metrics.auc(fpr, tpr)
-        plt.cla()
-        plt.title('Receiver Operating Characteristic')
-        plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
-        plt.legend(loc = 'lower right')
-        plt.plot([0, 1], [0, 1],'r--')
-        plt.xlim([0, 1])
-        plt.ylim([0, 1])
-        plt.ylabel('True Positive Rate')
-        plt.xlabel('False Positive Rate')
-        #plt.show()
-        #figure_name = self.__current_run.id + '_roc.png'
-        #plt.savefig(figure_name)
-        self.__current_run.log('roc_uac', roc_auc)
+    def _save_roc_curve(self, roc_auc: float, roc_plot: plt):
+        self._log_metrics('roc_auc', roc_auc)
         self.__current_run.log_image('ROC Curve', plot=plt)
-        plt.close()
-        return roc_auc

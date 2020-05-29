@@ -140,3 +140,4 @@ src/build/
 .azureml/
 samples/script_file.py
 samples/outputs/
+outputs/*

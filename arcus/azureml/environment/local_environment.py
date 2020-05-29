@@ -9,6 +9,9 @@ from azureml.data.dataset_error_handling import DatasetValidationError, DatasetE
 from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
 import arcus.azureml.environment.environment as env
 
+from arcus.azureml.experimenting.trainer import Trainer
+from arcus.azureml.experimenting.local_trainer import LocalMLTrainer
+
 class LocalEnvironment(env.WorkEnvironment):
     is_connected: bool = False
     __datastore_path: str = 'data'
@@ -69,6 +72,18 @@ class LocalEnvironment(env.WorkEnvironment):
         if columns:
             _result.columns = columns
         return _result
+
+    def start_experiment(self, name: str) -> Trainer:
+        '''
+        Creates a new local experiment (or connects to an existing one), using the give name
+
+        Args:
+            name (str): the name of the experiment which whill be used as reference
+        Returns:
+            Trainer: a Trainer object that can be used to perform trainings and add logging
+
+        '''
+        return LocalMLTrainer(name, self)
 
     def isvalid(self) -> bool:
         return True
