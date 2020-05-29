@@ -2,7 +2,6 @@ import os
 import sys
 from arcus.azureml.environment.environment_factory import WorkEnvironmentFactory as fac
 from collections import Counter
-import os
 # Imports for the excercise
 import pandas as pd 
 import logging
