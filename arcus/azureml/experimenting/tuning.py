@@ -13,6 +13,7 @@ from itertools import product
 import time 
 import numpy as np
 
+import arcus.azureml.experimenting.trainer as trainer
 
 class ArcusBaseSearchCV(BaseSearchCV):
     __metaclass__ = ABCMeta
@@ -34,6 +35,8 @@ class ArcusBaseSearchCV(BaseSearchCV):
         evaluate_candidates(ParameterGrid(self.param_grid))
     
     def fit(self, X, y=None, *, groups=None, **fit_params):
+        self.initialize_fitting(X, y)
+
         estimator = self.estimator
         cv = check_cv(self.cv, y, classifier=is_classifier(estimator))
 
@@ -166,6 +169,10 @@ class ArcusBaseSearchCV(BaseSearchCV):
     def log_results(self, train_score: float, test_score: float, sample_count: int, durations:np.array, parameters: dict, estimator):
         raise NotImplementedError
 
+    @abstractmethod
+    def initialize_fitting(self, X, y=None):
+        raise NotImplementedError
+
     def _fit_score_and_log(self, estimator, X, y, scorer, train, test, verbose,
                    parameters, fit_params, return_train_score=False,
                    return_parameters=False, return_n_test_samples=False,
@@ -203,10 +210,13 @@ class ArcusBaseSearchCV(BaseSearchCV):
 
 
 class LocalArcusGridSearchCV(ArcusBaseSearchCV):
+    __active_trainer: trainer.Trainer = None
+    __current_idx: int = 0
+    #TODO : Subclass the sklearn.model_selection._search.BaseSearchCV class. Override the fit(self, X, y=None, groups=None, **fit_params) method, and modify its internal evaluate_candidates(candidate_params) function. Instead of immediately returning the results dictionary from evaluate_candidates(candidate_params), perform your serialization here (or in the _run_search method depending on your use case). With some additional modifications, this approach has the added benefit of allowing you to execute the grid search sequentially (see the comment in the source code here: _search.py). Note that the results dictionary returned by evaluate_candidates(candidate_params) is the same as the cv_results dictionary. This approach worked for me, but I was also attempting to add save-and-restore functionality for interrupted grid search executions.
     def __init__(self, estimator, param_grid, *, scoring=None,
                  n_jobs=None, iid='deprecated', refit=True, cv=None,
                  verbose=0, pre_dispatch='2*n_jobs',
-                 error_score=np.nan, return_train_score=False):
+                 error_score=np.nan, return_train_score=False, active_trainer: trainer.Trainer = None):
         super().__init__(
             estimator=estimator, param_grid = param_grid, scoring=scoring,
             n_jobs=n_jobs, iid=iid, refit=refit, cv=cv, verbose=verbose,
@@ -214,7 +224,14 @@ class LocalArcusGridSearchCV(ArcusBaseSearchCV):
             return_train_score=return_train_score)
     
         self.param_grid = param_grid
+        self.__active_trainer = active_trainer
         _check_param_grid(param_grid)
 
+    def initialize_fitting(self, X, y=None):
+        print('Start fitting')
+        self.__current_idx = 0
+
     def log_results(self, train_score: float, test_score: float, sample_count: int, durations:np.array, parameters: dict, estimator):
-        print(test_score, parameters)
+        self.__current_idx+=1
+        if(self.__active_trainer is not None):
+            self.__active_trainer.add_tuning_result(self.__current_idx, train_score, test_score, sample_count, durations, parameters, estimator)

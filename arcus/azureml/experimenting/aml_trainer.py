@@ -12,6 +12,8 @@ import json
 from tqdm import tqdm
 from itertools import product, combinations
 from logging import Logger
+import logging
+import sys
 
 class AzureMLTrainer(trainer.Trainer):
     is_connected: bool = False
@@ -34,7 +36,7 @@ class AzureMLTrainer(trainer.Trainer):
         self.__logger = logging.getLogger()
         self.__experiment = Experiment(workspace=self.__workspace, name=experiment_name)
 
-    def new_run(self, description: str = None) -> Run:
+    def new_run(self, description: str = None, copy_folder: bool = False, metrics: dict = None) -> Run:
         '''
         This will begin a new interactive run on the existing AzureML Experiment.  When a previous run was still active, it will be completed.
         Args:
@@ -44,14 +46,58 @@ class AzureMLTrainer(trainer.Trainer):
         '''
         if(self.__current_run is not None):
             self.__current_run.complete()
-        self.__current_run = self.__experiment.start_logging()
+        if(copy_folder):
+            self.__current_run = self.__experiment.start_logging()
+        else:
+            self.__current_run = self.__experiment.start_logging(snapshot_directory = None)
+
+        if(metrics is not None):
+            for k, v in metrics.items():
+                self.__current_run.log(k, v)
+
         if(description is not None):
             self.__current_run.log('Description', description)
         
         return self.__current_run
 
+    def complete_run(self, fitted_model, metrics: dict = None, upload_model: bool = True):
+        '''
+        Saves all results to the active Run on AzureML and completes it
+        Args:
+            fitted_model (model): The already fitted model to be tested.  Sklearn and Keras models have been tested
+            metrics (dict): The metrics that should be logged with the model to the run
+            upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
+            return_predictions (bool): If true, the y_pred values will be returned
+        Returns: 
+            np.array: The predicted (y_pred) values against the model
+        '''
+        is_keras = 'keras' in str(type(fitted_model))
+
+        if(metrics is not None):
+            for k, v in metrics.items():
+                self.__current_run.log(k, v)
+
+        if upload_model:
+            # Save the model to the outputs directory for capture
+            if(is_keras):
+                model_file_name = 'outputs/model.json'
+                weights_file_name = 'outputs/model_weights.json'
+                model_json = fitted_model.to_json()
+                with open(model_file_name, "w") as json_file:
+                    json_file.write(model_json)
+                # serialize weights to HDF5
+                fitted_model.save_weights(weights_file_name)
+
+            else:
+                model_file_name = 'outputs/model.pkl'
+                joblib.dump(value = fitted_model, filename = model_file_name)
+            self.__current_run.upload_file(name = model_file_name, path_or_stream = model_file_name)
+
+        if (self.__current_run is not None):
+            self.__current_run.complete(True)
+
     def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, 
-                            class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True) -> np.array:
+                            class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
         '''
         Will predict and evaluate a model against a test set and save all results to the active Run on AzureML
         Args:
@@ -62,10 +108,21 @@ class AzureMLTrainer(trainer.Trainer):
             class_names (np.array): The class names that will be linked to the Confusion Matrix.  If not provided, the unique values of the y_test matrix will be used
             finish_existing_run (bool): Will complete the existing run on AzureML (defaults to True)
             upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
+            return_predictions (bool): If true, the y_pred values will be returned
         Returns: 
             np.array: The predicted (y_pred) values against the model
         '''
-        y_pred = fitted_model.predict(X_test)
+        is_keras = 'keras' in str(type(fitted_model))
+        
+        if(is_keras):
+            if 'predict_classes' in dir(fitted_model):
+                y_pred = fitted_model.predict_classes(X_test)
+            else:
+                y_pred = fitted_model.predict(X_test)
+                y_pred = np.argmax(y_pred, axis=1)
+        else:
+            y_pred = fitted_model.predict(X_test)
+
         if class_names is None:
             class_names = np.char.mod('%d', sorted(np.unique(y_test)))
 
@@ -80,20 +137,51 @@ class AzureMLTrainer(trainer.Trainer):
 
         if(show_roc == True):
             # Verify that we are having a binary classifier
-            if(len(fitted_model.classes_)!=2):
+            if(len(class_names)!=2):
                 raise AttributeError('Showing a ROC curve is only possible for binary classifier, not for multi class')
             self.__log_roc_curve(y_test, y_pred) 
 
         if upload_model:
             # Save the model to the outputs directory for capture
-            model_file_name = 'outputs/model.pkl'
-            joblib.dump(value = fitted_model, filename = model_file_name)
+            if(is_keras):
+                model_file_name = 'outputs/model.json'
+                weights_file_name = 'outputs/model_weights.json'
+                model_json = fitted_model.to_json()
+                with open(model_file_name, "w") as json_file:
+                    json_file.write(model_json)
+                # serialize weights to HDF5
+                fitted_model.save_weights(weights_file_name)
+
+            else:
+                model_file_name = 'outputs/model.pkl'
+                joblib.dump(value = fitted_model, filename = model_file_name)
             self.__current_run.upload_file(name = model_file_name, path_or_stream = model_file_name)
 
         if (finish_existing_run and self.__current_run is not None):
             self.__current_run.complete(True)
 
-        return y_pred
+        if return_predictions:  
+            return y_pred
+
+    def add_tuning_result(self, run_index: int, train_score: float, test_score: float, sample_count: int, durations:np.array, parameters: dict, estimator):
+        _child_run = self.__current_run.child_run('Gridsearch' + str(run_index))
+        self.__current_run.log_row('Trainscore', score = train_score)
+        self.__current_run.log_row('Testscore', score = test_score)
+
+        _table = {
+            'Testing score': test_score,
+            'Training score': train_score
+            }
+
+        for k in parameters.keys():
+            v = parameters[k]
+            if(v is None):
+                v = 'None'
+            _child_run.log(k, v)
+            _table[k] = v
+        
+        self.__current_run.log_row('Results', '', **_table)
+        _child_run.complete()
 
     def grid_search(self, model, hyper_parameters: dict, X_train: np.array, y_train: np.array, X_test: np.array, y_test: np.array, constructor_parameters: dict = None, validation_method = None, use_aml_compute: bool = False, take_highest:bool = True):
         if (use_aml_compute):
@@ -130,7 +218,7 @@ class AzureMLTrainer(trainer.Trainer):
             Experiment: the existing experiment
         '''
         return self.__experiment
-
+        
     def __log_confmatrix(self, confusion_matrix: np.array, class_names: np.array):
         data = {}
         data['schema_type'] = 'confusion_matrix'
@@ -164,10 +252,10 @@ class AzureMLTrainer(trainer.Trainer):
         plt.ylim([0, 1])
         plt.ylabel('True Positive Rate')
         plt.xlabel('False Positive Rate')
-        #plt.show()
         #figure_name = self.__current_run.id + '_roc.png'
         #plt.savefig(figure_name)
         self.__current_run.log('roc_uac', roc_auc)
         self.__current_run.log_image('ROC Curve', plot=plt)
+        plt.show(block=False)
         plt.close()
         return roc_auc
