@@ -6,7 +6,6 @@ from sklearn.model_selection._validation import _fit_and_score
 from sklearn.metrics._scorer import _check_multimetric_scoring
 from sklearn.utils.validation import indexable, check_is_fitted, _check_fit_params
 from sklearn.base import is_classifier, clone, BaseEstimator
-is_classifier
 from sklearn.model_selection import ParameterGrid
 from joblib import Parallel, delayed
 from itertools import product
