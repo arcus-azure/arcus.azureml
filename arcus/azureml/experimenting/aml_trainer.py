@@ -63,6 +63,16 @@ class AzureMLTrainer(trainer.Trainer):
         return self.__current_run
 
     def add_tuning_result(self, run_index: int, train_score: float, test_score: float, sample_count: int, durations:np.array, parameters: dict, estimator):
+        '''
+        This add results of a cross validation fold to the child run in a Grid Search
+        Args:
+            train_score (float): The given score of the training data
+            test_score (float): The given score of the test data
+            sample_count (int): The number of samples that were part of a fold
+            durations (np.array): The different durations of the Grid Search
+            parameters (dict): The parameter combinations that have been tested in this cross validation fold
+            estimate (model): The actual fitted estimator / model that was trained in this fold
+        '''
         _child_run = self.__current_run.child_run('Gridsearch' + str(run_index))
         self.__current_run.log_row('Trainscore', score = train_score)
         self.__current_run.log_row('Testscore', score = test_score)
