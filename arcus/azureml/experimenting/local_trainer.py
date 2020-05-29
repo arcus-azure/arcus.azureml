@@ -14,26 +14,51 @@ from itertools import product, combinations
 from logging import Logger
 import logging
 import sys
+from arcus.azureml.experimenting.tuning import LocalArcusGridSearchCV
+from arcus.azureml.environment.environment import WorkEnvironment
 
 class LocalMLTrainer(trainer.Trainer):
     is_connected: bool = False
     __logger: Logger = None
+    __data_directory: str = 'outputs'
+    __environment: WorkEnvironment = None
+    __current_experiment_name: str
+
+    def __init__(self, experiment_name: str, loc_workspace: WorkEnvironment):
+        '''
+        Initializes a new disconnected Trainer that will persist and log all runs on the local workspace
+        Args:
+            experiment_name (str): The name of the experiment that will be used as reference
+            loc_workspace (WorkEnvironment): The local WorkEnvironment
+        '''
+        self.__environment = loc_workspace
+        self.__current_experiment_name = experiment_name
+        self.__logger = logging.getLogger()
 
     def new_run(self, description: str = None, copy_folder: bool = False, metrics: dict = None) :
-        raise NotImplementedError
-    
-    def complete_run(self, fitted_model, metrics: dict = None, upload_model: bool = True):
-        raise NotImplementedError
-    
-    def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, 
-                            class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
-        raise NotImplementedError
+        '''
+        This will begin a new local run.  When a previous run was still active, it will be completed.
+        Args:
+            description (str): An optional description that will be added to the run metadata
+        '''
+        self.__logger.info("Starting new run", description, " with following metrics: ", metrics)
+        
 
     def get_best_model(self, metric_name:str, take_highest:bool = True):
         raise NotImplementedError
 
     def add_tuning_result(self, run_index: int, train_score: float, test_score: float, sample_count: int, durations:np.array, parameters: dict, estimator):
-        raise NotImplementedError
+        self.__logger.info('Tuning score: ', train_score, ' - Test score: ', test_score)
+        
+    def _log_metrics(self, metric_name: str, metric_value: float, description:str = None):
+        print(metric_name, metric_value) 
+    
+    def _complete_run(self):
+        self.__logger.info("Completing run with following metrics: ", metrics)
 
-    def grid_search(self, model, hyper_parameters: dict, X_train: np.array, y_train: np.array, X_test: np.array, y_test: np.array, constructor_parameters: dict = None, validation_method = None, use_aml_compute: bool = False, take_highest:bool = True):
-        raise NotImplementedError
+
+    def _log_confmatrix(self, confusion_matrix: np.array, class_names: np.array):
+        print(confusion_matrix)
+
+    def _save_roc_curve(self, roc_auc: float, roc_plot: plt):
+        self._log_metrics('roc_auc', roc_auc)
