@@ -12,6 +12,7 @@ pr:
   paths:
     include:
     - arcus/*
+    - tests/*
     - build/ci-build.yml
 
 resources:
@@ -39,7 +40,7 @@ steps:
   displayName: 'Update version number'
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/1.0.0/1.0.0.$(Build.BuildNumber)/g'' arcus/azureml/__init__.py'
+    script: 'sed -i ''s/1.0.0/$(Package.Version).$(Build.BuildNumber)/g'' arcus/azureml/__init__.py'
     failOnStderr: true
     
 - script: python -m pip install --upgrade pip setuptools wheel
@@ -67,7 +68,7 @@ steps:
     reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
 - script: |    
-    python setup.py bdist_wheel 
+    python setup.py sdist bdist_wheel 
   displayName: 'Build wheels'
 
 - script: python -m pip install --upgrade twine
@@ -82,7 +83,7 @@ steps:
   displayName: 'Print pypirc file'
 
 - script: |
-   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
+   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
   displayName: 'Publish to PyPi dev'
 
 - task: CopyFiles@2  
