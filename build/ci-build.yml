@@ -68,7 +68,7 @@ steps:
     reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
 - script: |    
-    python setup.py bdist_wheel 
+    python setup.py sdist bdist_wheel 
   displayName: 'Build wheels'
 
 - script: python -m pip install --upgrade twine
@@ -83,7 +83,7 @@ steps:
   displayName: 'Print pypirc file'
 
 - script: |
-   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*.whl
+   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
   displayName: 'Publish to PyPi dev'
 
 - task: CopyFiles@2  
