@@ -141,3 +141,4 @@ src/build/
 samples/script_file.py
 samples/outputs/
 outputs/*
+*.whl

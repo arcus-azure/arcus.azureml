@@ -35,7 +35,9 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/arcus-azure/arcus.azureml",
-    packages=packages_to_import,
+    packages=['arcus.azureml'],
+    package_dir={'arcus.azureml': 'arcus/azureml'},
+    namespace_packages=['arcus'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",
