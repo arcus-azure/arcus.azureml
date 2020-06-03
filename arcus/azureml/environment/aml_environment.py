@@ -1,7 +1,7 @@
 from abc import ABCMeta, abstractmethod
 import pandas as pd 
 import numpy as np
-from azureml.core import Workspace, Dataset, Datastore
+from azureml.core import Workspace, Dataset, Datastore, Run, Experiment
 from azureml.data.datapath import DataPath
 import os
 import glob
@@ -18,7 +18,7 @@ class AzureMLEnvironment(env.WorkEnvironment):
     __datastore_path: str = 'data'
 
     def __init__(self, config_file: str = None, datastore_path: str = None, subscription_id: str = None, 
-                resource_group: str = None, workspace_name: str = None, write_config: bool = False):
+                resource_group: str = None, workspace_name: str = None, write_config: bool = False, from_context: bool = False):
         '''
         This allows a user to specify to work connected or disconnected.  
         When connecting, the implementation will check if there's a local config file for AzureML 
@@ -29,24 +29,29 @@ class AzureMLEnvironment(env.WorkEnvironment):
             aml_workspace_name (azureml.core.Workspace): An already built Azure ML Workspace object that can be used to work connected
         '''
         self.__datastore_path = datastore_path
-        # User wants to connect
-        # Setting the config file to the passed argument
-        if config_file:
-            # Since a file name is passed, we should check if it exists
-            self.__config_file = config_file
-
-        # If workspace parameters are passed, the workspace will be taken and the config file will be ignored
-        if(subscription_id and resource_group and workspace_name):
-            self.__workspace = Workspace(subscription_id, resource_group, workspace_name)
-            if write_config:
-                self.__workspace.write_config(self.__config_file)
-        
+        if(from_context):
+            run = Run.get_context()
+            self.__workspace = run.experiment.workspace
+            self.__print_connection_info()
         else:
-            # A config file is passed, so we'll validate the existance and connect
-            if not os.path.exists(self.__config_file):
-                raise FileNotFoundError('The config file ' + self.__config_file + ' does not exist.  Please verify and try again')
-            # There is a config file, so we'll connect
-            self.__connect_from_config_file(self.__config_file)
+            # User wants to connect
+            # Setting the config file to the passed argument
+            if config_file:
+                # Since a file name is passed, we should check if it exists
+                self.__config_file = config_file
+
+            # If workspace parameters are passed, the workspace will be taken and the config file will be ignored
+            if(subscription_id and resource_group and workspace_name):
+                self.__workspace = Workspace(subscription_id, resource_group, workspace_name)
+                if write_config:
+                    self.__workspace.write_config(self.__config_file)
+            
+            else:
+                # A config file is passed, so we'll validate the existance and connect
+                if not os.path.exists(self.__config_file):
+                    raise FileNotFoundError('The config file ' + self.__config_file + ' does not exist.  Please verify and try again')
+                # There is a config file, so we'll connect
+                self.__connect_from_config_file(self.__config_file)
 
         self.is_connected = True
 
@@ -112,6 +117,9 @@ class AzureMLEnvironment(env.WorkEnvironment):
 
     def __connect_from_config_file(self, file_name:str):
         self.__workspace = Workspace.from_config(_file_name=file_name)
+        self.__print_connection_info()
+
+    def __print_connection_info(self):
         print('Connected to AzureML workspace')
         print('>> Name:', self.__workspace._workspace_name)
         print('>> Subscription:', self.__workspace.subscription_id)

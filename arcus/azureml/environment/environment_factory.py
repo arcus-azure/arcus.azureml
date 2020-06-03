@@ -39,3 +39,20 @@ class WorkEnvironmentFactory:
         else:
             return loc.LocalEnvironment(datastore_path=datastore_path)
 
+    @classmethod
+    def CreateFromContext(cls, connected: bool = True, datastore_path: str = None):
+        '''
+        Creates a WorkEnvironment and returns the correct implementation, based on the configuration
+        Args:
+            connected (bool): If connected, an aml_environment instance will be created, otherwise it will be a local_environment
+            datastore_path (str): 
+                When working locally: the location of a folder name where datasets will be loading from
+                When working connected: the name of a DataStore in AzureML that contains Datasets
+        Returns: 
+            WorkEnvironment: an instance of WorkEnvironment allowing the user to work connected.
+        '''    
+        if(connected):
+            return aml.AzureMLEnvironment(datastore_path = datastore_path, from_context=True)
+        else:
+            return loc.LocalEnvironment(datastore_path=datastore_path)
+

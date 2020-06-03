@@ -38,6 +38,7 @@ setuptools.setup(
     url="https://github.com/arcus-azure/arcus.azureml",
     packages=find_namespace_packages(include=['arcus.*'], exclude=['tests', 'docs', 'build', 'samples']),
     package_dir={'arcus.azureml': 'arcus/azureml'},
+    include_package_data=True,
     namespace_packages=['arcus'],
     classifiers=[
         "Programming Language :: Python :: 3",
