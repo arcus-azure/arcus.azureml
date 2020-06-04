@@ -3,6 +3,7 @@ import arcus.azureml
 import sys
 
 from setuptools.command.test import test as TestCommand
+from setuptools import find_namespace_packages
 
 with open("package-description.md", "r") as fh:
     long_description = fh.read()
@@ -35,7 +36,7 @@ setuptools.setup(
     long_description=long_description,
     long_description_content_type="text/markdown",
     url="https://github.com/arcus-azure/arcus.azureml",
-    packages=['arcus.azureml'],
+    packages=find_namespace_packages(include=['arcus.*'], exclude=['tests', 'docs', 'build', 'samples']),
     package_dir={'arcus.azureml': 'arcus/azureml'},
     namespace_packages=['arcus'],
     classifiers=[
