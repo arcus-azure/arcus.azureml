@@ -16,11 +16,6 @@ def is_interactive():
     # If the environment variable System_DefinitionId is not available, we run locally
     return 'SYSTEM_DEFINITIONID' not in os.environ
 
-def test_setup_training():
-    training = tr.AzureMLTrainer()
-    f = training.setup_training('tests/resources/test_training')
-    assert os.path.exists('tests/resources/test_training/train.py')
-
 def test_local_gridsearch_aml_logging():
     locenv = fac.WorkEnvironmentFactory.Create(connected = False)
     trainer = locenv.start_experiment('arcus-unit-tests')

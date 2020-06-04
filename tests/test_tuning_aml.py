@@ -14,7 +14,6 @@ def is_interactive():
     # If the environment variable System_DefinitionId is not available, we run locally
     return 'SYSTEM_DEFINITIONID' not in os.environ
 
-
 def test_local_gridsearch_aml_logging():
     if not is_interactive():
         pytest.skip('Test only runs when interactive mode enable')
