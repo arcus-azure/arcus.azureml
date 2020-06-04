@@ -26,8 +26,14 @@ We offer the following concepts:
 - Provide tracking & tracing of Grid Searches for Hyper parameter tuning
 - Enable trainings (through standard scripts and dependency files) to be executed locally and in the cloud, using the exact same logic and code.
 
-# Documentation
-All documentation can be found on [here](https://azureml.arcus-azure.net/).
+# Features
+
+We are providing added value in every step of the Machine Learning process.  With every new release, these features will be extended.  Currently we mostly focus on the training and experimentation phase.
+
+- [Interactive experimentations](/features/experimenting) - Evolve your model and experiment with several approaches and parameters, while keeping track of your progress and maintain a reference to every attempt.
+- [Scheduling of trainings](/features/training) - Quite commonly, you start locally to train and try a model on a smaller set of data, only to evolve to cloud based training on the full data set.  
+- Deployment and hosting (future releases)
+- Feedback (future releases)
 
 # Installation
 
