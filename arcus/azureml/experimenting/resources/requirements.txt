@@ -1,0 +1,16 @@
+numpy
+pandas
+tqdm
+joblib
+matplotlib
+opencv-python
+seaborn
+argparse
+azureml-core
+arcus-azureml>=0.0.dev0
+arcus-ml>=0.0.dev0
+azureml-core
+scikit-image
+scikit-learn
+keras
+tensorflow

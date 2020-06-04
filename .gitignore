@@ -142,3 +142,4 @@ samples/script_file.py
 samples/outputs/
 outputs/*
 *.whl
+tests/resources/test_training/
