@@ -8,12 +8,13 @@ from sklearn.model_selection import train_test_split
 from sklearn import linear_model
 import pytest
 import arcus.azureml.environment.environment_factory as fac
+import arcus.azureml.experimenting.aml_trainer as tr
+
 from datetime import datetime
 
 def is_interactive():
     # If the environment variable System_DefinitionId is not available, we run locally
     return 'SYSTEM_DEFINITIONID' not in os.environ
-
 
 def test_local_gridsearch_aml_logging():
     locenv = fac.WorkEnvironmentFactory.Create(connected = False)

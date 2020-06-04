@@ -1,6 +1,8 @@
 numpy
 pandas
 azureml-core
+azureml-train
+azureml-widgets
 tqdm
 joblib
 scikit-learn

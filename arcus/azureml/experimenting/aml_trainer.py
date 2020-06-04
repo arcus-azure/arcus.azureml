@@ -14,6 +14,11 @@ from itertools import product, combinations
 from logging import Logger
 import logging
 import sys
+import os
+import os.path
+from azureml.train.estimator import Estimator
+from azureml.widgets import RunDetails
+import shutil
 
 class AzureMLTrainer(trainer.Trainer):
     is_connected: bool = False
@@ -95,7 +100,6 @@ class AzureMLTrainer(trainer.Trainer):
     def get_best_model(self, metric_name:str, take_highest:bool = True):
         '''
         Tags and returns the best model of the experiment, based on the given metric
-
         Args:
             metric_name (str): The name of the metric, such as accuracy
             take_highest (bool): In case of accuracy and score, this is typically True.  In case you want to get the model based on the lowest error, you can use False
@@ -122,6 +126,60 @@ class AzureMLTrainer(trainer.Trainer):
         '''
         return self.__experiment
         
+
+
+    def setup_training(self, training_name: str):
+        '''
+        Will initialize a new directory (using the given training_name) and add a training script and requirements file to run training
+        Args:
+            training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+        '''
+        if not os.path.exists(training_name):
+            os.makedirs(training_name)
+        # Take default training script and copy to the new folder
+        default_training_script_file = os.path.join(str(os.path.dirname(__file__)), 'resources/train.py')
+        shutil.copy2(default_training_script_file, training_name)
+        
+
+    def start_training(self, training_name: str, input_datasets: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True):
+        ''' 
+        Will start a new training, taking the training name as the folder of the run
+        Args:
+            training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            input_datasets (np.array): An array of data set names that will be passed to the Run 
+            compute_target (str): The compute target (default = 'local') on which the training should be executed
+            gpu_compute (bool): Indicates if GPU compute is required for this script or not
+            script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
+        '''
+        # Check if directory exists
+        if not(os.path.exists(training_name) and os.path.isdir(training_name)):
+            raise FileNotFoundError(training_name)
+
+        # Add datasets
+        datasets = list()
+        if(input_datasets is not None):
+            for ds in input_datasets:
+                datasets.append(self.__workspace.datasets[ds].as_named_input(ds))
+
+        # Get existing experiment
+        estimator = Estimator(source_directory=training_name,
+                        script_params=script_parameters,
+                        inputs=datasets,
+                        compute_target=compute_target,
+                        entry_script='train.py',
+                        pip_requirements_file='requirements.txt', 
+                        use_docker=True)
+
+
+        # Submit training
+        run = self.__experiment.submit(estimator)
+        print(run.get_portal_url())
+
+        if(show_widget):
+            RunDetails(run).show()
+
+
+    # protected implementation methods
     def _log_metrics(self, metric_name: str, metric_value: float, description:str = None):
         print(metric_name, metric_value) 
 
@@ -129,6 +187,9 @@ class AzureMLTrainer(trainer.Trainer):
 
     
     def _complete_run(self):
+        '''
+        Completes the current run
+        '''
         self.__current_run.complete()
 
     def _log_confmatrix(self, confusion_matrix: np.array, class_names: np.array):
