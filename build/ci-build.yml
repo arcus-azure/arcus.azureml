@@ -12,6 +12,7 @@ pr:
   paths:
     include:
     - arcus/*
+    - tests/*
     - build/ci-build.yml
 
 resources:
@@ -39,7 +40,7 @@ steps:
   displayName: 'Update version number'
   inputs:
     targetType: 'inline'
-    script: 'sed -i ''s/1.0.0/1.0.0.$(Build.BuildNumber)/g'' arcus/azureml/__init__.py'
+    script: 'sed -i ''s/1.0.0/$(Package.Version).$(Build.BuildNumber)/g'' arcus/azureml/__init__.py'
     failOnStderr: true
     
 - script: python -m pip install --upgrade pip setuptools wheel
