@@ -8,7 +8,7 @@ from sklearn.model_selection import train_test_split
 from sklearn import linear_model
 import pytest
 import arcus.azureml.environment.environment_factory as fac
-import arcus.azureml.experimenting.trainer as tr
+import arcus.azureml.experimenting.aml_trainer as tr
 
 from datetime import datetime
 
@@ -17,7 +17,7 @@ def is_interactive():
     return 'SYSTEM_DEFINITIONID' not in os.environ
 
 def test_setup_training():
-    training = tr.Trainer()
+    training = tr.AzureMLTrainer()
     f = training.setup_training('tests/resources/test_training')
     assert os.path.exists('tests/resources/test_training/train.py')
 
