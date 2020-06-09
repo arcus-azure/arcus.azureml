@@ -7,8 +7,8 @@ opencv-python
 seaborn
 argparse
 azureml-core
-arcus-azureml>=0.0.dev0
-arcus-ml>=0.0.dev0
+arcus-azureml==1.0.6.2020060306rc0
+arcus-ml==1.0.9a2020060308
 azureml-core
 scikit-image
 scikit-learn
