@@ -10,6 +10,8 @@ from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
 import arcus.azureml.environment.environment as env
 from arcus.azureml.experimenting import trainer
 from arcus.azureml.experimenting import aml_trainer
+from azureml.dataprep.api.functions import get_portable_path
+from azureml.dataprep import col, get_stream_properties, SummaryColumnsValue, SummaryFunction
 
 class AzureMLEnvironment(env.WorkEnvironment):
     is_connected: bool = False
@@ -125,3 +127,25 @@ class AzureMLEnvironment(env.WorkEnvironment):
         print('>> Subscription:', self.__workspace.subscription_id)
         print('>> Resource group:', self.__workspace.resource_group)
 
+    def capture_filedataset_layout(self, dataset_name: str, output_path: str):
+        dataset = self.__workspace.datasets[dataset_name]
+        files_column = 'Path'
+        PORTABLE_PATH = 'PortablePath'
+        STREAM_PROPERTIES = 'StreamProperties'
+        dataflow = dataset._dataflow \
+                .add_column(get_portable_path(col(files_column), None), PORTABLE_PATH, files_column) \
+                .add_column(get_stream_properties(col(files_column)), STREAM_PROPERTIES, PORTABLE_PATH) \
+                .keep_columns([files_column, PORTABLE_PATH, STREAM_PROPERTIES])
+        dataflow_to_execute = dataflow.add_step('Microsoft.DPrep.WritePreppyBlock', {
+            'outputPath': {
+                'target': 0,
+                'resourceDetails': [{'path': str(output_path)}]
+            },
+            'profilingFields': ['Kinds', 'MissingAndEmpty']
+        })
+        dataflow_to_execute.run_local()
+        df = dataflow.to_pandas_dataframe(extended_types=True)
+        df = df.merge(pd.io.json.json_normalize(df.StreamProperties), left_index=True, right_index=True)
+        print(f'{len(df.index)} files found in the dataset, totalling to a size of {(df.Size.sum() / (1024 * 1024)):,.2f} MB')
+
+        return df
