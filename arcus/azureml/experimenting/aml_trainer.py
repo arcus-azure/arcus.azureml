@@ -1,8 +1,14 @@
 from arcus.azureml.experimenting import trainer
+from arcus.azureml.experimenting import errors
+
 from azureml.core import Workspace, Dataset, Datastore, Experiment, Run
+from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.data.datapath import DataPath
 from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
 from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
+from azureml.train.estimator import Estimator
+from azureml.widgets import RunDetails
+
 from datetime import datetime
 import sklearn.metrics as metrics
 import joblib
@@ -16,8 +22,6 @@ import logging
 import sys
 import os
 import os.path
-from azureml.train.estimator import Estimator
-from azureml.widgets import RunDetails
 import shutil
 
 class AzureMLTrainer(trainer.Trainer):
@@ -28,6 +32,7 @@ class AzureMLTrainer(trainer.Trainer):
     __current_experiment_name: str
     __current_run: Run = None
     __logger: Logger = None
+    __vm_size_list: list = None
 
     def __init__(self, experiment_name: str, aml_workspace: Workspace):
         '''
@@ -140,8 +145,25 @@ class AzureMLTrainer(trainer.Trainer):
         default_training_script_file = os.path.join(str(os.path.dirname(__file__)), 'resources/train.py')
         shutil.copy2(default_training_script_file, training_name)
         
+    def __check_compute_target(self, compute_target, use_gpu: bool):
+        __vm_size = ''
+        if isinstance(compute_target, AmlCompute):
+            __vm_size = compute_target.vm_size
+        elif isinstance(compute_target, str):
+            compute = ComputeTarget(workspace=self.__workspace, name=compute_target)
+            __vm_size = compute.vm_size
 
-    def start_training(self, training_name: str, input_datasets: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True):
+        if self.__vm_size_list is None:
+            self.__vm_size_list = AmlCompute.supported_vmsizes(self.__workspace)
+        
+        vm_description = list(filter(lambda vmsize: str.upper(vmsize['name']) == str.upper(__vm_size), self.__vm_size_list))[0]
+        if(use_gpu and vm_description['gpus'] == 0):
+            raise errors.TrainingComputeException(f'gpu_compute was specified, but the target does not have GPUs: {vm_description} ')
+        if(not (use_gpu) and vm_description['vCPUs'] == 0):
+            raise errors.TrainingComputeException(f'cpu_compute was specified, but the target does not have CPUs: {vm_description} ')
+
+
+    def start_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
         ''' 
         Will start a new training, taking the training name as the folder of the run
         Args:
@@ -155,21 +177,45 @@ class AzureMLTrainer(trainer.Trainer):
         if not(os.path.exists(training_name) and os.path.isdir(training_name)):
             raise FileNotFoundError(training_name)
 
+        # Check compute target
+        self.__check_compute_target(compute_target, gpu_compute)
+            
+
         # Add datasets
         datasets = list()
         if(input_datasets is not None):
             for ds in input_datasets:
-                datasets.append(self.__workspace.datasets[ds].as_named_input(ds))
+                datasets.append(self.__workspace.datasets[ds].as_named_input(ds).as_mount())
 
-        # Get existing experiment
-        estimator = Estimator(source_directory=training_name,
-                        script_params=script_parameters,
-                        inputs=datasets,
-                        compute_target=compute_target,
-                        entry_script='train.py',
-                        pip_requirements_file='requirements.txt', 
-                        use_docker=True)
+        # as mount - as download
+        constructor_parameters = {
+            'source_directory':training_name,
+            'script_params':script_parameters,
+            'inputs':datasets,
+            'compute_target':compute_target,
+            'entry_script':'train.py',
+            'pip_requirements_file':'requirements.txt', 
+            'use_gpu':gpu_compute,
+            'use_docker':True}
+        
+        print('Creating estimator of type', estimator_type)
 
+        if(estimator_type is None):
+            # Using default Estimator
+            estimator = Estimator(**constructor_parameters)
+        elif(estimator_type == 'tensorflow'):
+            from azureml.train.dnn import TensorFlow
+            version_par = 'framework_version'
+            if(not version_par in constructor_parameters.keys()):
+                print('Defaulting to version 2.0 for TensorFlow')
+                constructor_parameters[version_par] = '2.0'
+            estimator = TensorFlow(**constructor_parameters)
+        elif(estimator_type == 'sklearn'):
+            from azureml.train.sklearn import SKLearn
+            estimator = SKLearn(**constructor_parameters)
+        elif(estimator_type == 'pytorch'):
+            from azureml.train.dnn import PyTorch
+            estimator = PyTorch(**constructor_parameters)
 
         # Submit training
         run = self.__experiment.submit(estimator)
@@ -177,7 +223,6 @@ class AzureMLTrainer(trainer.Trainer):
 
         if(show_widget):
             RunDetails(run).show()
-
 
     # protected implementation methods
     def _log_metrics(self, metric_name: str, metric_value: float, description:str = None):
