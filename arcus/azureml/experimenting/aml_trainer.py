@@ -163,12 +163,13 @@ class AzureMLTrainer(trainer.Trainer):
             raise errors.TrainingComputeException(f'cpu_compute was specified, but the target does not have CPUs: {vm_description} ')
 
 
-    def start_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
+    def start_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
         ''' 
         Will start a new training, taking the training name as the folder of the run
         Args:
             training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
-            input_datasets (np.array): An array of data set names that will be passed to the Run 
+            input_datasets (np.array): An array of data set names that will be mounted on the compute in a directory of the dataset name
+            input_datasets_to_download (np.array): An array of data set names that will be downloaded to the compute in a directory of the dataset name
             compute_target (str): The compute target (default = 'local') on which the training should be executed
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
@@ -185,7 +186,10 @@ class AzureMLTrainer(trainer.Trainer):
         datasets = list()
         if(input_datasets is not None):
             for ds in input_datasets:
-                datasets.append(self.__workspace.datasets[ds].as_named_input(ds).as_mount())
+                datasets.append(self.__workspace.datasets[ds].as_named_input(ds).as_mount(path_on_compute=ds))
+        if(input_datasets_to_download is not None):
+            for ds in input_datasets_to_download:
+                datasets.append(self.__workspace.datasets[ds].as_named_input(ds).as_download(path_on_compute=ds))
 
         # as mount - as download
         constructor_parameters = {
