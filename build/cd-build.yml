@@ -51,6 +51,7 @@ steps:
 - template: github/create-release.yml@templates
   parameters:
     tag: '$(Package.Version)'
+    releaseTitle: '$(Package.Version)'
     repositoryName: 'arcus-azure/arcus.azureml'
     releaseNotes: |
       Install new version via [PyPi](https://pypi.org/project/arcus-azureml/$(Package.Version))
