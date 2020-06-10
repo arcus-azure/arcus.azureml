@@ -52,9 +52,9 @@ steps:
   parameters:
     repositoryName: 'arcus-azure/arcus.azureml'
     releaseNotes: |
-      Install new version via [PyPi](https://pypi.org/project/arcus-azureml/$(Build.BuildNumber))
+      Install new version via [PyPi](https://pypi.org/project/arcus-azureml/$(Package.Version))
       ```shell
-      PM > pip install arcus-azureml==$(Build.BuildNumber)
+      PM > pip install arcus-azureml==$(Package.Version)
       ```
 
 - script: |
