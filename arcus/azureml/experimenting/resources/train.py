@@ -22,8 +22,8 @@ from arcus.ml import dataframes as adf
 from arcus.ml.timeseries import timeops
 from arcus.ml.images import *
 from arcus.ml.evaluation import classification as clev
-from arcus.azureml.environment.environment_factory import WorkEnvironmentFactory as fac
-from arcus.azureml.experimenting.trainer import Trainer
+from arcus.azureml.environment.aml_environment import AzureMLEnvironment
+from arcus.azureml.experimenting.aml_trainer import AzureMLTrainer
 
 # Add AzureML references
 from azureml.core import Workspace, Dataset, Datastore, Experiment, Run
@@ -87,8 +87,8 @@ es_patience = args.es_patience
 train_test_split_ratio = args.train_test_split_ratio
 
 # Load the environment from the Run context, so you can access any dataset
-aml_environment = fac.CreateFromContext()
-ws = Run.get_context().experiment.workspace
+aml_environment = AzureMLEnvironment.CreateFromContext()
+trainer = AzureMLTrainer.CreateFromContext()
 
 if not os.path.exists('outputs'):
     os.makedirs('outputs')

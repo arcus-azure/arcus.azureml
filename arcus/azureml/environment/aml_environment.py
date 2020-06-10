@@ -159,7 +159,7 @@ class AzureMLEnvironment(env.WorkEnvironment):
             _df.columns = columns
         return _df
 
-    def start_experiment(self, name: str) -> trainer.Trainer:
+    def start_experiment(self, name: str) -> aml_trainer.AzureMLTrainer:
         '''
         Creates a new experiment (or connects to an existing one), using the give name
 
