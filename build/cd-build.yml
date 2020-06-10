@@ -10,6 +10,13 @@ pr: none
 pool:
   vmImage: 'ubuntu-latest'
 
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: arcus-azure/azure-devops-templates
+      endpoint: arcus-azure
+
 steps:
 - task: UsePythonVersion@0
   inputs:
