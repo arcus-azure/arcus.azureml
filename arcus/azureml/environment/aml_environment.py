@@ -19,7 +19,7 @@ class AzureMLEnvironment(env.WorkEnvironment):
     __workspace: Workspace = None
     __datastore_path: str = 'data'
 
-    def __init__(self, config_file: str = None, datastore_path: str = None, subscription_id: str = None, 
+    def __init__(self, config_file: str = None, datastore_path: str = None, subscription_id: str = None, connect_workspace: bool = True,
                 resource_group: str = None, workspace_name: str = None, write_config: bool = False, from_context: bool = False):
         '''
         This allows a user to specify to work connected or disconnected.  
@@ -48,34 +48,75 @@ class AzureMLEnvironment(env.WorkEnvironment):
                 if write_config:
                     self.__workspace.write_config(self.__config_file)
             
-            else:
+            elif connect_workspace:
                 # A config file is passed, so we'll validate the existance and connect
                 if not os.path.exists(self.__config_file):
                     raise FileNotFoundError('The config file ' + self.__config_file + ' does not exist.  Please verify and try again')
                 # There is a config file, so we'll connect
                 self.__connect_from_config_file(self.__config_file)
 
-        self.is_connected = True
+        self.is_connected = connect_workspace
 
-    def load_tabular_dataset(self, dataset_name: str) -> pd.DataFrame:
+    @classmethod
+    def CreateFromContext(cls, datastore_path: str = None):
         '''
-        Loads a tabular dataset by a given name. the implementation will load the Dataset by name from the AzureML Workspace
+        Creates a WorkEnvironment and returns the correct implementation, based on the configuration
+        Args:
+            datastore_path (str): the name of a DataStore in AzureML that contains Datasets
+        Returns: 
+            AzureMLEnvironment: an instance of WorkEnvironment allowing the user to work connected.
+        '''   
+        return cls(datastore_path = datastore_path, from_context=True)
+
+    @classmethod
+    def Create(cls, subscription_id: str = None, resource_group: str = None, workspace_name: str = None, 
+                write_config: bool = False, config_file: str = None, datastore_path: str = None):
+        '''
+        Creates a WorkEnvironment and returns the correct implementation, based on the configuration
+        Args:
+            subscription_id (str): The subscription id where the AzureML service resides
+            resource_group (str): The resource group that contains the AzureML workspace
+            workspace_name (str): Name of the AzureML workspace
+            write_config (bool): If True, the WorkSpace configuration will be persisted in the given (or default) config file
+            config_file (str): The name of the config file (defaulting to .azureml/config.json) that contains the Workspace parameters
+            datastore_path (str): the name of a DataStore in AzureML that contains Datasets
+        Returns: 
+            AzureMLEnvironment: an instance of WorkEnvironment allowing the user to work connected.
+        '''   
+        return cls(config_file = config_file, datastore_path = datastore_path, 
+                    subscription_id=subscription_id, resource_group=resource_group, 
+                    workspace_name= workspace_name, write_config = write_config)
+
+    def load_tabular_dataset(self, dataset_name: str, cloud_storage: bool = True) -> pd.DataFrame:
+        '''
+        Loads a tabular dataset by a given name. 
+            The implementation will load the Dataset by name from the AzureML Workspace
+            When configured locally, the data frame will be loaded from a file in the datastore_path with name {dataset_name}.csv
         Args:
             dataset_name (str): The name of the dataset to load
+            cloud_storage (bool): When changed to False, the dataset will be loaded from the local folder
         Returns:
             pd.DataFrame: The dataset, loaded as a DataFrame
         '''
         # Connecting data set
-        _dataset = Dataset.get_by_name(self.__workspace, name=dataset_name)
-        return _dataset.to_pandas_dataframe()
+        if cloud_storage:
+            _dataset = Dataset.get_by_name(self.__workspace, name=dataset_name)
+            return _dataset.to_pandas_dataframe()
+        else:
+            _file_name = os.path.join(self.__datastore_path, dataset_name + '.csv')
+            return pd.read_csv(_file_name)
 
-    def load_tabular_partition(self, partition_name: str, datastore_name: str = None, columns: np.array = None, first_row_header: bool = False) -> pd.DataFrame:
+
+    def load_tabular_partition(self, partition_name: str, datastore_name: str = None, columns: np.array = None, first_row_header: bool = False, cloud_storage: bool = True) -> pd.DataFrame:
         '''
-        Loads a partition from a tabular dataset. the implementation will connect to the DataStore and get all delimited files matching the partition_name
+        Loads a partition from a tabular dataset. 
+            The implementation will connect to the DataStore and get all delimited files matching the partition_name
+            When configured locally, the implementation will append all files in the datastore_path with name {partition_name}.csv
         Args:
             partition_name (str): The name of the partition as a wildcard filter.  Example: B* will take all files starting with B, ending with csv
             columns: (np.array): The column names to assign to the dataframe
-            datastore_path (str): The name of a DataStore in AzureML that contains Datasets
+            datastore_path (str): The name of a DataStore that contains Datasets
+            cloud_storage (bool): When changed to False, the dataset will be loaded from the local folder
         Returns:
             pd.DataFrame: The dataset, loaded as a DataFrame
         '''
@@ -83,18 +124,37 @@ class AzureMLEnvironment(env.WorkEnvironment):
             # No datastore name is given, so we'll take the default one
             datastore_name = self.__datastore_path
 
-        # Connecting data store
-        datastore = Datastore(self.__workspace, name=datastore_name)
-        try:
-            _header = PromoteHeadersBehavior.ALL_FILES_HAVE_SAME_HEADERS if first_row_header else False
-            _aml_dataset = Dataset.Tabular.from_delimited_files(header=_header,
-                path=DataPath(datastore, '/' + partition_name + '.csv')) #, set_column_types=columns
-            _df = _aml_dataset.to_pandas_dataframe()
-        except DatasetValidationError as dsvalex:
-            if 'provided path is not valid' in str(dsvalex):
+        if cloud_storage:
+            # Connecting data store
+            datastore = Datastore(self.__workspace, name=datastore_name)
+            try:
+                _header = PromoteHeadersBehavior.ALL_FILES_HAVE_SAME_HEADERS if first_row_header else False
+                _aml_dataset = Dataset.Tabular.from_delimited_files(header=_header,
+                    path=DataPath(datastore, '/' + partition_name + '.csv')) #, set_column_types=columns
+                _df = _aml_dataset.to_pandas_dataframe()
+            except DatasetValidationError as dsvalex:
+                if 'provided path is not valid' in str(dsvalex):
+                    return None
+                else:
+                    raise
+        else:
+            # Reading data from sub files in a folder
+            _folder_path = datastore_name
+            _partition_files = glob.glob(_folder_path + '/' + partition_name + '.csv')
+            _record_found = False
+            _df = None
+            for filename in _partition_files:
+                _header = 0 if first_row_header else None
+                df = pd.read_csv(filename, index_col=None, header=_header)
+                if not _record_found:
+                    _df = df
+                    _record_found = True
+                else:
+                    _df = _df.append(df)
+
+            if not _record_found:
                 return None
-            else:
-                raise
+
         if columns != None:
             _df.columns = columns
         return _df

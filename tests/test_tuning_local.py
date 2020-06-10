@@ -7,7 +7,7 @@ import numpy as np
 from sklearn.model_selection import train_test_split
 from sklearn import linear_model
 import pytest
-import arcus.azureml.environment.environment_factory as fac
+import arcus.azureml.environment.aml_environment as aml
 from datetime import datetime
 
 def is_interactive():
@@ -15,7 +15,7 @@ def is_interactive():
     return 'SYSTEM_DEFINITIONID' not in os.environ
 
 def test_local_gridsearch_aml_logging():
-    locenv = fac.WorkEnvironmentFactory.Create(connected = False)
+    locenv = aml.AzureMLEnvironment.Create()
     trainer = locenv.start_experiment('arcus-unit-tests')
 
     _run = trainer.new_run('logreg-'+ datetime.now().strftime("%Y%m%d-%H%M%S"))

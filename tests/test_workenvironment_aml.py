@@ -1,6 +1,8 @@
 import os
 import sys
 from arcus.azureml.environment.environment_factory import WorkEnvironmentFactory as fac
+from arcus.azureml.environment.aml_environment import AzureMLEnvironment as aml
+
 from collections import Counter
 # Imports for the excercise
 import pandas as pd 
@@ -41,8 +43,15 @@ def setup_function(func):
 datastore_name = 'smart_devops'
 partitioned_datastore_name = 'aiincubators_covid'
 
-def test_dataset():
+def test_factory_dataset():
     work_env = fac.Create(connected=True)
+    _df = work_env.load_tabular_dataset('smart-devops-changesets')
+    _df = _df.tail(20)
+    assert _df.shape == (20,16) # 16 columns expected
+
+
+def test_dataset():
+    work_env = aml.Create()
     _df = work_env.load_tabular_dataset('smart-devops-changesets')
     _df = _df.tail(20)
     assert _df.shape == (20,16) # 16 columns expected

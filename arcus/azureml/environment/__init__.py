@@ -1,1 +1,1 @@
-__all__ = ['aml_environment', 'environment_factory', 'environment', 'local_environment']
+__all__ = ['aml_environment', 'environment_factory', 'environment', 'errors']
