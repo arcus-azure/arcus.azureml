@@ -145,3 +145,4 @@ outputs/*
 tests/resources/test_training/
 .azureml/config.json
 c
+unit-test/*

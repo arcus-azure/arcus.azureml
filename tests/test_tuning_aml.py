@@ -9,6 +9,7 @@ from sklearn import linear_model
 import pytest
 import arcus.azureml.environment.aml_environment as aml
 from datetime import datetime
+import io
 
 def is_interactive():
     # If the environment variable System_DefinitionId is not available, we run locally
@@ -32,3 +33,11 @@ def test_local_gridsearch_aml_logging():
     grid = LocalArcusGridSearchCV(logreg, param_grid, scoring='accuracy', active_trainer=trainer)
     grid.fit(X_train, y_train)
 
+def test_setup_training():
+    if not is_interactive():
+        pytest.skip('Test only runs when interactive mode enable')
+
+    amlenv = aml.AzureMLEnvironment.Create(config_file='.azureml/config.json')
+    trainer = amlenv.start_experiment('arcus-unit-tests')
+    trainer.setup_training('unit-test')
+    assert os.path.exists(os.path.join('unit-test', 'train.py'))

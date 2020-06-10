@@ -240,11 +240,13 @@ class AzureMLTrainer(trainer.Trainer):
         # Take default training script and copy to the new folder
         default_training_script_file = os.path.join(str(os.path.dirname(__file__)), 'resources/train.py')
         default_requirements_file = os.path.join(str(os.path.dirname(__file__)), 'resources/requirements.txt')
+        dest_training_script_file = os.path.join(training_name, 'train.py')
+        dest_requirements_file = os.path.join(training_name, 'requirements.txt')
 
-        if overwrite or not(os.path.isfile(default_training_script_file)):
+        if overwrite or not(os.path.isfile(dest_training_script_file)):
             shutil.copy2(default_training_script_file, training_name)
 
-        if overwrite or not(os.path.isfile(default_requirements_file)):
+        if overwrite or not(os.path.isfile(dest_requirements_file)):
             shutil.copy2(default_requirements_file, training_name)
         
 
