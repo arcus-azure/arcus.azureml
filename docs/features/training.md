@@ -91,6 +91,74 @@ After the model has been trained, it can easily be saved in the `outputs` folder
 fitted_model.save('outputs/model')
 ```
 
+### Launch training
+
+Once the training script is ready, it's time to start the training on the compute of choice.  
+We are launching the training, by using the Estimators that are available in AzureML. 
+The following steps will take place:
+
+1. Based on the specified trainingtype (Tensorflow, Scikit-learn, Pytorch, etc), a base docker image will be taken from the public Microsoft container repository.  The following estimator_types are currently supported: 
+    - `tensorflow`: has tensor flow enabled and installed (supporting GPU and CPU) and can be used for Keras too
+    - `sklearn`: has the scikit-learn packages installed that are providing most common Machine Learning algorithms
+    - `pytorch`: has the Deep Learning package of PyTorch installed.
+    - `None`: in this case an empty, default Estimator will be taken and all packages have to be provided through the requirements.txt file.
+1. In extra docker layers, there will be other python packages installed, by leveragin the configured requirements.txt file
+1. Once the image is ready, a container instance will be created on the specified compute.
+1. The file data sets will be mounted or downloaded (depending on the configuration) and made available on the docker image (as a relative folder to the training script)
+1. The training script will be launched with the script arguments 
+1. After the script completes, all files that have been written to the logs and the outputs folders will be uploaded to the Run history in AzureML
+1. The container instance will be removed, but the container image will remain in the Azure Container Registry that comes with an AzureML workspace (and is visible in your resource group).  This means that next time, the same image can be reused if the requirements.txt haven't changed.
+
+__Launching a training on local compute__
+
+The following code snippet launches a training on the local compute.  In this case the docker image will be built and started on the local host, where docker is required to be running.  All logs will be made visible in the Widget, visible in the notebook.  The process of that run can also be monitored in the AzureML Workspace portal.
+
+```python
+arguments = {
+    '--epochs': 5,
+    '--filter_count': 5,
+    '--max_images': 20
+}
+
+trainer.start_training(training_name, estimator_type='tensorflow', 
+                       compute_target='local', gpu_compute=True, script_parameters = arguments)
+```
+
+__Launching a training on AmlCompute__
+
+The following code snippet launches the training on a compute target (indicated by the `compute_target` argument) in the AzureML workspace.  The same mechanics are at play as described in the previous section. 
+
+```python
+arguments = {
+    '--epochs': 5,
+    '--filter_count': 5,
+    '--max_images': 20
+}
+
+trainer.start_training(training_name, estimator_type='tensorflow', 
+                       compute_target='gpu-cluster', gpu_compute=True, script_parameters = arguments)
+```
+
+__Working with files in a training__
+
+Quite often there is a need to leverage files in a training.  Thinking about neural networks that require images in their training and test data sets, for example.  The following steps describe two options to make files available on the training containers.
+
+- A `FileDataSet` can be mounted to an Estimator.  By mounting a dataset, a reference is being made on the training cluster that references the files in the cloud.  The files are only downloaded or accessed when the script is performing an action (listing files in the folder, reading a file by name, etc).  
+- A `FileDataSet`can be downloaded to an Estimator.  By downloading a dataset, all files are fully downloaded onto the training cluster (in the training folder).  The initial startup of your training might take longer, as this only happens after all files have been downloaded.  
+
+The following code snippet shows to datasets that are being made available on the training cluster.  One is mounted, the other is being downloaded.  But the actual access to the files happens exactly the same across both methods, as you can see in the training script.  The files are made available in a directory with the exact same name as the dataset.
+
+```python
+mount_dataset_name = 'ds_to_mount'
+download_dataset_name = 'ds_to_download'
+
+trainer.start_training(training_name, estimator_type='tensorflow', 
+                       input_datasets = [mount_dataset_name],
+                       input_datasets_to_download = [download_dataset_name],
+                       compute_target='gp-cluster', gpu_compute=True, script_parameters = arguments)
+
+```
+
 ## Sample notebooks
 
 
