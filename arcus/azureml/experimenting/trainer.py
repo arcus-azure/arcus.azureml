@@ -16,7 +16,7 @@ class Trainer:
         This will begin a new interactive run on the existing experiment.  When a previous run was still active, it will be completed.
         Args:
             description (str): An optional description that will be added to the run metadata
-            copy_folder (bool): Indicates if the output folder should be snapshotted and persisted
+            copy_folder (bool): Indicates if the outputs folder should be snapshotted and persisted
             metrics (dict): The metrics that should be logged in the run already
         '''
         raise NotImplementedError
