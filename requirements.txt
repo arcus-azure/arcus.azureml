@@ -3,6 +3,7 @@ pandas
 azureml-core
 azureml-train
 azureml-widgets
+azureml.dataprep
 tqdm
 joblib
 scikit-learn
