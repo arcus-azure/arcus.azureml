@@ -6,8 +6,6 @@ from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.data.datapath import DataPath
 from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
 from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
-from azureml.train.estimator import Estimator
-from azureml.widgets import RunDetails
 
 from datetime import datetime
 import sklearn.metrics as metrics
@@ -262,6 +260,8 @@ class AzureMLTrainer(trainer.Trainer):
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
         '''
+        from azureml.train.estimator import Estimator
+
         # Check if directory exists
         if not(os.path.exists(training_name) and os.path.isdir(training_name)):
             raise FileNotFoundError(training_name)
@@ -315,6 +315,7 @@ class AzureMLTrainer(trainer.Trainer):
         print(run.get_portal_url())
 
         if(show_widget):
+            from azureml.widgets import RunDetails
             RunDetails(run).show()
 
     # protected implementation methods

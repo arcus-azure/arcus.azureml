@@ -5,13 +5,11 @@ from azureml.core import Workspace, Dataset, Datastore, Run, Experiment
 from azureml.data.datapath import DataPath
 import os
 import glob
-from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
-from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
 import arcus.azureml.environment.environment as env
 from arcus.azureml.experimenting import trainer
 from arcus.azureml.experimenting import aml_trainer
-from azureml.dataprep.api.functions import get_portable_path
-from azureml.dataprep import col, get_stream_properties, SummaryColumnsValue, SummaryFunction
+from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
+from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
 
 class AzureMLEnvironment(env.WorkEnvironment):
     is_connected: bool = False
@@ -188,6 +186,9 @@ class AzureMLEnvironment(env.WorkEnvironment):
         print('>> Resource group:', self.__workspace.resource_group)
 
     def capture_filedataset_layout(self, dataset_name: str, output_path: str):
+        from azureml.dataprep.api.functions import get_portable_path
+        from azureml.dataprep import col, get_stream_properties, SummaryColumnsValue, SummaryFunction
+
         dataset = self.__workspace.datasets[dataset_name]
         files_column = 'Path'
         PORTABLE_PATH = 'PortablePath'
