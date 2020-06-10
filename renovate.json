@@ -6,6 +6,7 @@
   "ignoreDeps":[],
   "prHourlyLimit": 0,
   "prConcurrentLimit": 0,
+  "ignorePaths": ["/arcus/azureml/experimenting/resources"],
   "extends": [
     "config:base"
   ],

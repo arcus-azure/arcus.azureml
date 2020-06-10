@@ -143,3 +143,5 @@ samples/outputs/
 outputs/*
 *.whl
 tests/resources/test_training/
+.azureml/config.json
+c

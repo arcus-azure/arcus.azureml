@@ -10,6 +10,13 @@ pr: none
 pool:
   vmImage: 'ubuntu-latest'
 
+resources:
+  repositories:
+    - repository: templates
+      type: github
+      name: arcus-azure/azure-devops-templates
+      endpoint: arcus-azure
+
 steps:
 - task: UsePythonVersion@0
   inputs:
@@ -40,6 +47,17 @@ steps:
 - task: TwineAuthenticate@1
   inputs:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
+
+- template: github/create-release.yml@templates
+  parameters:
+    tag: '$(Package.Version)'
+    releaseTitle: '$(Package.Version)'
+    repositoryName: 'arcus-azure/arcus.azureml'
+    releaseNotes: |
+      Install new version via [PyPi](https://pypi.org/project/arcus-azureml/$(Package.Version))
+      ```shell
+      PM > pip install arcus-azureml==$(Package.Version)
+      ```
 
 - script: |
    python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
