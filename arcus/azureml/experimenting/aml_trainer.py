@@ -133,17 +133,24 @@ class AzureMLTrainer(trainer.Trainer):
         
 
 
-    def setup_training(self, training_name: str):
+    def setup_training(self, training_name: str, overwrite: bool = False):
         '''
         Will initialize a new directory (using the given training_name) and add a training script and requirements file to run training
         Args:
             training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            overwrite (bool): Defines if the existing training files should be overwritten
         '''
         if not os.path.exists(training_name):
             os.makedirs(training_name)
         # Take default training script and copy to the new folder
         default_training_script_file = os.path.join(str(os.path.dirname(__file__)), 'resources/train.py')
-        shutil.copy2(default_training_script_file, training_name)
+        default_requirements_file = os.path.join(str(os.path.dirname(__file__)), 'resources/requirements.txt')
+
+        if overwrite or os.path.isfile(default_training_script_file):
+            shutil.copy2(default_training_script_file, training_name)
+
+        if overwrite or os.path.isfile(default_requirements_file):
+            shutil.copy2(default_requirements_file, training_name)
         
     def __check_compute_target(self, compute_target, use_gpu: bool):
         __vm_size = ''
@@ -179,7 +186,8 @@ class AzureMLTrainer(trainer.Trainer):
             raise FileNotFoundError(training_name)
 
         # Check compute target
-        self.__check_compute_target(compute_target, gpu_compute)
+        if compute_target != 'local':
+            self.__check_compute_target(compute_target, gpu_compute)
             
 
         # Add datasets
