@@ -41,6 +41,15 @@ steps:
   inputs:
     pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
+- template: github/create-release.yml@templates
+  parameters:
+    repositoryName: 'arcus-azure/arcus.azureml'
+    releaseNotes: |
+      Install new version via [PyPi](https://pypi.org/project/arcus-azureml/$(Build.BuildNumber))
+      ```shell
+      PM > pip install arcus-azureml==$(Build.BuildNumber)
+      ```
+
 - script: |
    python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
   displayName: 'Publish to PyPi'
