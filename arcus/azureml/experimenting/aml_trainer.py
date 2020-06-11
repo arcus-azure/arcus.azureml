@@ -6,8 +6,6 @@ from azureml.core.compute import ComputeTarget, AmlCompute
 from azureml.data.datapath import DataPath
 from azureml.data.dataset_error_handling import DatasetValidationError, DatasetExecutionError
 from azureml.data.dataset_type_definitions import PromoteHeadersBehavior
-from azureml.train.estimator import Estimator
-from azureml.widgets import RunDetails
 
 from datetime import datetime
 import sklearn.metrics as metrics
@@ -34,7 +32,7 @@ class AzureMLTrainer(trainer.Trainer):
     __logger: Logger = None
     __vm_size_list: list = None
 
-    def __init__(self, experiment_name: str, aml_workspace: Workspace):
+    def __init__(self, experiment_name: str, aml_workspace: Workspace, aml_run: Run = None):
         '''
         Initializes a new connected Trainer that will persist and log all runs on AzureML workspace
         Args:
@@ -42,9 +40,26 @@ class AzureMLTrainer(trainer.Trainer):
             aml_workspace (Workspace): The connected workspace on AzureML
         '''
         self.__workspace = aml_workspace
-        self.__current_experiment_name = experiment_name
         self.__logger = logging.getLogger()
-        self.__experiment = Experiment(workspace=self.__workspace, name=experiment_name)
+        if aml_run is not None:
+            self.__current_run = aml_run
+            self.__experiment = aml_run.experiment
+            self.__current_experiment_name = aml_run.experiment.name
+        else:
+            self.__current_experiment_name = experiment_name
+            self.__experiment = Experiment(workspace=self.__workspace, name=experiment_name)
+
+
+    @classmethod
+    def CreateFromContext(cls):
+        '''
+        Creates a Trainer, based on the current Run context.  This will only work when used in an Estimator
+        Returns: 
+            AzureMLTrainer: an instance of AzureMLTrainer allowing the user to work connected.
+        '''   
+        run = Run.get_context()
+        return cls(run.experiment.name, run.experiment.workspace, run)
+
 
     def new_run(self, description: str = None, copy_folder: bool = True, metrics: dict = None) -> Run:
         '''
@@ -131,6 +146,86 @@ class AzureMLTrainer(trainer.Trainer):
         '''
         return self.__experiment
         
+    def complete_run(self, fitted_model, metrics_to_log: dict = None, upload_model: bool = True):
+        '''
+        Saves all results of the active Run and completes it
+        Args:
+            fitted_model (model): The already fitted model to be tested.  Sklearn and Keras models have been tested
+            metrics_to_log (dict): The metrics that should be logged with the model to the run
+            upload_model (bool): This will upload the model (pkl file or json) to AzureML run (defaults to True)
+        '''
+        is_keras = 'keras' in str(type(fitted_model))
+
+        if(metrics_to_log is not None):
+            for k, v in metrics_to_log.items():
+                self._log_metrics(k, v)
+        
+        if upload_model:
+            # Save the model to the outputs directory for capture
+            if(is_keras):
+                model_folder_name = 'outputs/model'
+                fitted_model.save(model_folder_name)
+                files_to_upload = dict()
+            else:
+                model_file_name = 'outputs/model.pkl'
+                joblib.dump(value = fitted_model, filename = model_file_name)
+
+        self._complete_run()
+
+    def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, 
+                             class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
+
+        '''
+        Will predict and evaluate a model against a test set and save all results to the active Run on AzureML
+        Args:
+            fitted_model (model): The already fitted model to be tested.  Sklearn and Keras models have been tested
+            X_test (np.array): The test set to calculate the predictions with
+            y_test (np.array): The output test set to evaluate the predictions against
+            show_roc (bool): This will upload the ROC curve to the run in case of a binary classifier
+            class_names (np.array): The class names that will be linked to the Confusion Matrix.  If not provided, the unique values of the y_test matrix will be used
+            finish_existing_run (bool): Will complete the existing run on AzureML (defaults to True)
+            upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
+            return_predictions (bool): If true, the y_pred values will be returned
+        Returns: 
+            np.array: The predicted (y_pred) values against the model
+        '''
+        is_keras = 'keras' in str(type(fitted_model))
+        
+        # Predict X_test with model
+        if(is_keras):
+            if 'predict_classes' in dir(fitted_model):
+                y_pred = fitted_model.predict_classes(X_test)
+            else:
+                y_pred = fitted_model.predict(X_test)
+                y_pred = np.argmax(y_pred, axis=1)
+        else:
+            y_pred = fitted_model.predict(X_test)
+
+        if class_names is None:
+            class_names = np.char.mod('%d', sorted(np.unique(y_test)))
+
+        # Print classification report
+        print(metrics.classification_report(y_test, y_pred))
+
+        # Confusion matrix
+        cf = metrics.confusion_matrix(y_test, y_pred)
+        self._log_confmatrix(cf, class_names)
+
+        # Accuracy
+        accuracy = metrics.accuracy_score(y_test, y_pred) * 100
+        self._log_metrics('accuracy', accuracy, description='')
+
+        if(show_roc == True):
+            # Verify that we are having a binary classifier
+            if(len(class_names)!=2):
+                raise AttributeError('Showing a ROC curve is only possible for binary classifier, not for multi class')
+            self.__log_roc_curve(y_test, y_pred) 
+
+        if (finish_existing_run):
+            self.complete_run(fitted_model, upload_model = upload_model)
+
+        if return_predictions:  
+            return y_pred
 
 
     def setup_training(self, training_name: str, overwrite: bool = False):
@@ -145,42 +240,128 @@ class AzureMLTrainer(trainer.Trainer):
         # Take default training script and copy to the new folder
         default_training_script_file = os.path.join(str(os.path.dirname(__file__)), 'resources/train.py')
         default_requirements_file = os.path.join(str(os.path.dirname(__file__)), 'resources/requirements.txt')
+        dest_training_script_file = os.path.join(training_name, 'train.py')
+        dest_requirements_file = os.path.join(training_name, 'requirements.txt')
 
-        if overwrite or os.path.isfile(default_training_script_file):
+        if overwrite or not(os.path.isfile(dest_training_script_file)):
             shutil.copy2(default_training_script_file, training_name)
 
-        if overwrite or os.path.isfile(default_requirements_file):
+        if overwrite or not(os.path.isfile(dest_requirements_file)):
             shutil.copy2(default_requirements_file, training_name)
         
-    def __check_compute_target(self, compute_target, use_gpu: bool):
-        __vm_size = ''
-        if isinstance(compute_target, AmlCompute):
-            __vm_size = compute_target.vm_size
-        elif isinstance(compute_target, str):
-            compute = ComputeTarget(workspace=self.__workspace, name=compute_target)
-            __vm_size = compute.vm_size
-
-        if self.__vm_size_list is None:
-            self.__vm_size_list = AmlCompute.supported_vmsizes(self.__workspace)
-        
-        vm_description = list(filter(lambda vmsize: str.upper(vmsize['name']) == str.upper(__vm_size), self.__vm_size_list))[0]
-        if(use_gpu and vm_description['gpus'] == 0):
-            raise errors.TrainingComputeException(f'gpu_compute was specified, but the target does not have GPUs: {vm_description} ')
-        if(not (use_gpu) and vm_description['vCPUs'] == 0):
-            raise errors.TrainingComputeException(f'cpu_compute was specified, but the target does not have CPUs: {vm_description} ')
-
-
-    def start_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
+    def start_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, 
+                        input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, 
+                        script_parameters: dict = None, show_widget: bool = True, use_estimator: bool = False, **kwargs):
         ''' 
         Will start a new training, taking the training name as the folder of the run
         Args:
             training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            environment_type (str): either the name of an existing environment that will be taken as base, or one of these values (tensorflow, sklearn, pytorch).  
             input_datasets (np.array): An array of data set names that will be mounted on the compute in a directory of the dataset name
             input_datasets_to_download (np.array): An array of data set names that will be downloaded to the compute in a directory of the dataset name
             compute_target (str): The compute target (default = 'local') on which the training should be executed
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
+            show_widget (bool): Will display the live tracking of the submitted Run
         '''
+        if use_estimator:
+            self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
+        else:
+            self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
+
+    def _start_environment_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, 
+                                    input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, 
+                                    script_parameters: dict = None, show_widget: bool = True, **kwargs):
+        ''' 
+        Will start a new training using ScriptRunConfig, taking the training name as the folder of the run
+        Args:
+            training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            environment_type (str): either the name of an existing environment that will be taken as base, or one of these values (tensorflow, sklearn, pytorch).  
+            input_datasets (np.array): An array of data set names that will be mounted on the compute in a directory of the dataset name
+            input_datasets_to_download (np.array): An array of data set names that will be downloaded to the compute in a directory of the dataset name
+            compute_target (str): The compute target (default = 'local') on which the training should be executed
+            gpu_compute (bool): Indicates if GPU compute is required for this script or not
+            script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
+            show_widget (bool): Will display the live tracking of the submitted Run
+        '''
+        from azureml.train.estimator import Estimator
+        from azureml.core import Environment, ScriptRunConfig
+        from azureml.core.runconfig import RunConfiguration
+        from azureml.core.runconfig import DataReferenceConfiguration
+        from azureml.core.runconfig import CondaDependencies
+        from arcus.azureml.experimenting import train_environment as te
+
+        # Check if directory exists
+        if not(os.path.exists(training_name) and os.path.isdir(training_name)):
+            raise FileNotFoundError(training_name)
+
+        # Check compute target
+        if compute_target != 'local':
+            self.__check_compute_target(compute_target, gpu_compute)
+
+        training_env = te.get_training_environment(self.__workspace, training_name, os.path.join(training_name, 'requirements.txt'), use_gpu=gpu_compute, include_prerelease=True, environment_type=environment_type)
+        runconfig = RunConfiguration()
+
+        # Add datasets
+        datarefs = dict()
+        
+        scriptargs = list()
+        if script_parameters is not None:
+           for key in script_parameters.keys():
+               scriptargs.append(key)
+               scriptargs.append(script_parameters[key])
+
+        if(input_datasets is not None):
+            for ds in input_datasets:
+                print(f'Adding mounting data reference for dataset {ds}')
+                # scriptargs.append(ds)
+                scriptargs.append(self.__workspace.datasets[ds].as_named_input(ds).as_mount(path_on_compute = ds))
+#                datastore, path = self._get_data_reference(self.__workspace.datasets[ds])
+#                datarefs[ds] = DataReferenceConfiguration(datastore_name=datastore, path_on_datastore = path, path_on_compute = '/' + ds, mode = 'mount', overwrite = False)
+        if(input_datasets_to_download is not None):
+            for ds in input_datasets_to_download:
+                print(f'Adding download data reference for dataset {ds}')
+                # scriptargs.append(ds)
+                scriptargs.append(self.__workspace.datasets[ds].as_named_input(ds).as_download(path_on_compute = ds))
+
+
+
+        scriptrunconfig = ScriptRunConfig(source_directory='./' + training_name, script="train.py", run_config=runconfig, 
+                                            arguments=scriptargs)
+        scriptrunconfig.run_config.target = compute_target
+        scriptrunconfig.run_config.environment = training_env
+        #scriptrunconfig.run_config.data_references = datarefs
+
+        # Submit training
+        run = self.__experiment.submit(scriptrunconfig)
+        print(run.get_portal_url())
+
+        if(show_widget):
+            from azureml.widgets import RunDetails
+            RunDetails(run).show()
+
+    def _get_data_reference(self, dataset: Dataset):
+        import json
+        j = json.loads(str(dataset).replace('FileDataset\n', ''))
+        source = j['source'][0]
+        sections = source.split("'")
+        return sections[1], sections[3]
+
+    def _start_estimator_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
+        ''' 
+        Will start a new training using an Estimator, taking the training name as the folder of the run
+        Args:
+            training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            environment_type (str): one of these values (tensorflow, sklearn, pytorch).  
+            input_datasets (np.array): An array of data set names that will be mounted on the compute in a directory of the dataset name
+            input_datasets_to_download (np.array): An array of data set names that will be downloaded to the compute in a directory of the dataset name
+            compute_target (str): The compute target (default = 'local') on which the training should be executed
+            gpu_compute (bool): Indicates if GPU compute is required for this script or not
+            script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
+            show_widget (bool): Will display the live tracking of the submitted Run
+        '''
+        from azureml.train.estimator import Estimator
+
         # Check if directory exists
         if not(os.path.exists(training_name) and os.path.isdir(training_name)):
             raise FileNotFoundError(training_name)
@@ -234,6 +415,7 @@ class AzureMLTrainer(trainer.Trainer):
         print(run.get_portal_url())
 
         if(show_widget):
+            from azureml.widgets import RunDetails
             RunDetails(run).show()
 
     # protected implementation methods
@@ -265,3 +447,49 @@ class AzureMLTrainer(trainer.Trainer):
     def _save_roc_curve(self, roc_auc: float, roc_plot: plt):
         self._log_metrics('roc_auc', roc_auc)
         self.__current_run.log_image('ROC Curve', plot=plt)
+
+    def __check_compute_target(self, compute_target, use_gpu: bool):
+        __vm_size = ''
+        if isinstance(compute_target, AmlCompute):
+            __vm_size = compute_target.vm_size
+        elif isinstance(compute_target, str):
+            compute = ComputeTarget(workspace=self.__workspace, name=compute_target)
+            __vm_size = compute.vm_size
+
+        if self.__vm_size_list is None:
+            self.__vm_size_list = AmlCompute.supported_vmsizes(self.__workspace)
+        
+        vm_description = list(filter(lambda vmsize: str.upper(vmsize['name']) == str.upper(__vm_size), self.__vm_size_list))[0]
+        if(use_gpu and vm_description['gpus'] == 0):
+            raise errors.TrainingComputeException(f'gpu_compute was specified, but the target does not have GPUs: {vm_description} ')
+        if(not (use_gpu) and vm_description['vCPUs'] == 0):
+            raise errors.TrainingComputeException(f'cpu_compute was specified, but the target does not have CPUs: {vm_description} ')
+
+
+    def __log_roc_curve(self, y_pred: np.array, y_test: np.array):
+        '''Will upload the Receiver Operating Characteristic (ROC) Curve for binary classifiers
+
+        Args:
+            y_pred (np.array): The predicted values of the test set 
+            y_test (np.array): The actual outputs of the test set
+
+        Returns: 
+            float: The ROC_AUC value
+        '''
+        # calculate the fpr and tpr for all thresholds of the classification
+        fpr, tpr, threshold = metrics.roc_curve(y_test, y_pred)
+        roc_auc = metrics.auc(fpr, tpr)
+        plt.cla()
+        plt.title('Receiver Operating Characteristic')
+        plt.plot(fpr, tpr, 'b', label = 'AUC = %0.2f' % roc_auc)
+        plt.legend(loc = 'lower right')
+        plt.plot([0, 1], [0, 1],'r--')
+        plt.xlim([0, 1])
+        plt.ylim([0, 1])
+        plt.ylabel('True Positive Rate')
+        plt.xlabel('False Positive Rate')
+        self._save_roc_curve(roc_auc, plt)
+        plt.show(block=False)
+        plt.close()
+        return roc_auc
+

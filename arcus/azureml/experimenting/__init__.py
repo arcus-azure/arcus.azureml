@@ -1,1 +1,1 @@
-__all__ = ['aml_trainer', 'local_trainer', 'trainer', 'tuning', 'errors']
+__all__ = ['aml_trainer', 'local_trainer', 'trainer', 'tuning', 'errors', 'train_environment']
