@@ -10,3 +10,5 @@ scikit-learn
 matplotlib
 tensorflow
 keras
+arcus-ml
+opencv-python
