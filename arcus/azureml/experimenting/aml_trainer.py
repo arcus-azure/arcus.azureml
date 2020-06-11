@@ -249,7 +249,7 @@ class AzureMLTrainer(trainer.Trainer):
         if overwrite or not(os.path.isfile(dest_requirements_file)):
             shutil.copy2(default_requirements_file, training_name)
         
-    def start_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
+    def start_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
         ''' 
         Will start a new training, taking the training name as the folder of the run
         Args:
@@ -260,10 +260,10 @@ class AzureMLTrainer(trainer.Trainer):
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
         '''
-        self._start_environment_training(training_name, estimator_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
+        self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
 
 
-    def _start_environment_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
+    def _start_environment_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
         ''' 
         Will start a new training, taking the training name as the folder of the run
         Args:
@@ -289,42 +289,38 @@ class AzureMLTrainer(trainer.Trainer):
         if compute_target != 'local':
             self.__check_compute_target(compute_target, gpu_compute)
 
-        #training_env = Environment.from_pip_requirements(name = training_name,
-        #                                        file_path = os.path.join(training_name, 'requirements.txt'))
-        
-        #CondaDependencies.create()
-        #training_env.python.conda_dependencies.set_pip_
-        #training_env.docker.enabled = True
-        #_ = training_env.register(workspace=self.__workspace)
-        training_env = te.get_training_environment(self.__workspace, training_name, os.path.join(training_name, 'requirements.txt'), True)
+        training_env = te.get_training_environment(self.__workspace, training_name, os.path.join(training_name, 'requirements.txt'), use_gpu=gpu_compute, include_prerelease=True, environment_type=environment_type)
         runconfig = RunConfiguration()
 
         # Add datasets
         datarefs = dict()
         
+        scriptargs = list()
+        if script_parameters is not None:
+           for key in script_parameters.keys():
+               scriptargs.append(key)
+               scriptargs.append(script_parameters[key])
+
         if(input_datasets is not None):
             for ds in input_datasets:
-                datastore, path = self._get_data_reference(self.__workspace.datasets[ds])
-                print(f'Adding mounting data reference for dataset {ds} on datastore {datastore} with path {path}')
-                datarefs[ds] = DataReferenceConfiguration(datastore_name=datastore, path_on_datastore = path, path_on_compute = '/' + ds, mode = 'mount', overwrite = False)
+                print(f'Adding mounting data reference for dataset {ds}')
+                # scriptargs.append(ds)
+                scriptargs.append(self.__workspace.datasets[ds].as_named_input(ds).as_mount(path_on_compute = ds))
+#                datastore, path = self._get_data_reference(self.__workspace.datasets[ds])
+#                datarefs[ds] = DataReferenceConfiguration(datastore_name=datastore, path_on_datastore = path, path_on_compute = '/' + ds, mode = 'mount', overwrite = False)
         if(input_datasets_to_download is not None):
             for ds in input_datasets_to_download:
-                datastore, path = self._get_data_reference(self.__workspace.datasets[ds])
-                print(f'Adding download data reference for dataset {ds} on datastore {datastore} with path {path}')
-                datarefs[ds] = DataReferenceConfiguration(datastore_name=datastore, path_on_datastore = path, path_on_compute = '/' + ds, mode = 'download', overwrite = False)
+                print(f'Adding download data reference for dataset {ds}')
+                # scriptargs.append(ds)
+                scriptargs.append(self.__workspace.datasets[ds].as_named_input(ds).as_download(path_on_compute = ds))
 
-        scriptargs = list()
 
-        if script_parameters is not None:
-            for key in script_parameters.keys():
-                scriptargs.append(key)
-                scriptargs.append(script_parameters[key])
 
         scriptrunconfig = ScriptRunConfig(source_directory='./' + training_name, script="train.py", run_config=runconfig, 
-                                            arguments=np.array(scriptargs))
+                                            arguments=scriptargs)
         scriptrunconfig.run_config.target = compute_target
         scriptrunconfig.run_config.environment = training_env
-        scriptrunconfig.run_config.data_references = datarefs
+        #scriptrunconfig.run_config.data_references = datarefs
 
         # Submit training
         run = self.__experiment.submit(scriptrunconfig)

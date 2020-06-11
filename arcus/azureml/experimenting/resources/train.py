@@ -98,7 +98,8 @@ if not os.path.exists('outputs'):
 ##########################################
 
 # Access tabular dataset (which is not passed as input)
-# time_df = aml_environment.load_tabular_dataset('time-dataset')
+# df = aml_environment.load_tabular_dataset('mydataset')
+
 
 # access file data set just in the current sub directory
 # every dataset that was passed as input to the start_training 
