@@ -255,22 +255,41 @@ class AzureMLTrainer(trainer.Trainer):
             incorrect_predictions = [i for i, item in enumerate(y_pred) if item != y_test[i]]
             total_images = min(len(incorrect_predictions), failed_classifications_to_save)
 
-            for i in random.choices(incorrect_predictions, k=total_images):
+            for i in random.sample(incorrect_predictions, total_images):
                 pred_class = y_pred[i]
                 act_class = y_test[i]
-                print(pred_class, act_class)
                 if class_names is not None:
                     pred_class = class_names[pred_class]
                     act_class = class_names[act_class]
-                image = X_test[i].reshape(X_test.shape[1], X_test.shape[2])
-                imgplot = explorer.show_image(image, silent_mode=True)
+                imgplot = explorer.show_image(X_test[i], silent_mode=True)
                 description = f'Predicted {pred_class} - Actual {act_class}'
                 self.__current_run.log_image(description, plot=imgplot)
 
         if return_predictions:  
             return y_pred
 
- 
+    def save_image_outputs(self, X_test: np.array, y_test: np.array, y_pred: np.array, samples_to_save: int = 1) -> np.array:
+
+        '''
+        Will save image outputs to the run
+        Args:
+            X_test (np.array): The input images for the model
+            y_test (np.array): The actual expected output images of the model
+            y_pred (np.array): The predicted or calculated output images of the model
+            samples_to_save (int): If greather than 0, this amount of input, output and generated image combinations will be tracked to the Run
+        ''' 
+
+        if samples_to_save > 0:
+            # Take incorrect classified images and save
+            import random
+            total_images = min(len(y_pred), samples_to_save)
+
+            for i in random.sample(range(len(y_pred)), total_images):
+                groupplot = explorer.visualize({'Charts': [X_test[i]], 'Actuals': [y_test[i]], 'Calculated': [y_pred[i]]}, 1, grid_size=(6, 6), silent_mode=True)
+                image = X_test[i].reshape(X_test.shape[1], X_test.shape[2])
+                imgplot = explorer.show_image(image, silent_mode=True)
+                self.__current_run.log_image(f'Sample {i:02d} / {total_images:02d}', plot=groupplot)
+
     def setup_training(self, training_name: str, overwrite: bool = False):
         '''
         Will initialize a new directory (using the given training_name) and add a training script and requirements file to run training
