@@ -11,5 +11,5 @@ scikit-image
 matplotlib
 tensorflow
 keras
-arcus-ml
+arcus-ml>=1.0.10
 opencv-python
