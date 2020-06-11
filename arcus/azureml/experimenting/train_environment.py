@@ -3,6 +3,17 @@ import os
 import numpy as np
 
 def get_training_environment(ws: Workspace, name: str, pip_file: str, use_gpu: bool = False, include_prerelease: bool = False, environment_type: str = None):
+    '''
+    Creates a training environment, based on the required pip packages, the need for GPU and a given environment type
+    Args:
+        ws (Workspace): the AzureML workspace that will be used to register the environment
+        name (str): the name for the environment that will be registered
+        use_gpu (bool): indicating if a GPU is required or not
+        include_prerelease (bool): indicates if the pip packages can be installed in prerelease mode
+        environment_type (str): either the name of an existing environment that will be taken as base, or one of these values (tensorflow, sklearn, pytorch).  
+    Returns:
+        a registered environment , ready to use
+    '''
     from azureml.train.estimator import Estimator
     from azureml.core import Environment, ScriptRunConfig
     from azureml.core.runconfig import RunConfiguration

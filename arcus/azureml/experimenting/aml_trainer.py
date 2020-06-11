@@ -249,30 +249,40 @@ class AzureMLTrainer(trainer.Trainer):
         if overwrite or not(os.path.isfile(dest_requirements_file)):
             shutil.copy2(default_requirements_file, training_name)
         
-    def start_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
+    def start_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, 
+                        input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, 
+                        script_parameters: dict = None, show_widget: bool = True, use_estimator: bool = False, **kwargs):
         ''' 
         Will start a new training, taking the training name as the folder of the run
         Args:
             training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            environment_type (str): either the name of an existing environment that will be taken as base, or one of these values (tensorflow, sklearn, pytorch).  
             input_datasets (np.array): An array of data set names that will be mounted on the compute in a directory of the dataset name
             input_datasets_to_download (np.array): An array of data set names that will be downloaded to the compute in a directory of the dataset name
             compute_target (str): The compute target (default = 'local') on which the training should be executed
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
+            show_widget (bool): Will display the live tracking of the submitted Run
         '''
-        self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
+        if use_estimator:
+            self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
+        else:
+            self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
 
-
-    def _start_environment_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
+    def _start_environment_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, 
+                                    input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, 
+                                    script_parameters: dict = None, show_widget: bool = True, **kwargs):
         ''' 
-        Will start a new training, taking the training name as the folder of the run
+        Will start a new training using ScriptRunConfig, taking the training name as the folder of the run
         Args:
             training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            environment_type (str): either the name of an existing environment that will be taken as base, or one of these values (tensorflow, sklearn, pytorch).  
             input_datasets (np.array): An array of data set names that will be mounted on the compute in a directory of the dataset name
             input_datasets_to_download (np.array): An array of data set names that will be downloaded to the compute in a directory of the dataset name
             compute_target (str): The compute target (default = 'local') on which the training should be executed
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
+            show_widget (bool): Will display the live tracking of the submitted Run
         '''
         from azureml.train.estimator import Estimator
         from azureml.core import Environment, ScriptRunConfig
@@ -339,14 +349,16 @@ class AzureMLTrainer(trainer.Trainer):
 
     def _start_estimator_training(self, training_name: str, estimator_type: str = None, input_datasets: np.array = None, input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, script_parameters: dict = None, show_widget: bool = True, **kwargs):
         ''' 
-        Will start a new training, taking the training name as the folder of the run
+        Will start a new training using an Estimator, taking the training name as the folder of the run
         Args:
             training_name (str): The name of a training.  This will be used to create a directory.  Can contain subdirectory
+            environment_type (str): one of these values (tensorflow, sklearn, pytorch).  
             input_datasets (np.array): An array of data set names that will be mounted on the compute in a directory of the dataset name
             input_datasets_to_download (np.array): An array of data set names that will be downloaded to the compute in a directory of the dataset name
             compute_target (str): The compute target (default = 'local') on which the training should be executed
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
+            show_widget (bool): Will display the live tracking of the submitted Run
         '''
         from azureml.train.estimator import Estimator
 

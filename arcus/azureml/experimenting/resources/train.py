@@ -2,14 +2,6 @@
 import subprocess
 import sys
 
-def install(package):
-    subprocess.check_call([sys.executable, "-m", "pip", "--upgrade", "--pre", package])
-
-install('arcus-ml')
-install('arcus-azureml')
-install('azureml-core')
-install('azureml-sdk')
-
 # General references
 import argparse
 import os
@@ -144,6 +136,8 @@ X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=train_test_s
 model = build_model()
 fitted_model = perform_training(model, X_train, y_train, epoch_count=epoch_count, batch_size=batch_size, es_patience=es_patience)
 
+# Custom metrics tracking
+# trainer._log_metrics('dice_coef_loss', list(fitted_model.history.history['dice_coef_loss'])[-1], description='')
 
 
 ##########################################

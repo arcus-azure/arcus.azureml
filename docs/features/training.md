@@ -34,10 +34,10 @@ As we will be launching our training on a docker environment, this environment h
 work_env = AzureMLEnvironment.Create()
 training_name = 'my-training'
 trainer = work_env.start_experiment(training_name)
-trainer.setup_training(training_name)
+trainer.setup_training(training_name, overwrite=False)
 ```
 
-### Create your training script
+### Edit your training script
 
 Navigate to the newly created folder and edit the `train.py` script.  This script contains the following sections that provide standard functionality.
 
@@ -75,12 +75,27 @@ __Data access__
 - __File data sets__ will be available in a directory relative to the training folder, with a name that equals the name of the dataset.  (hyphens in the dataset are however not supported).  
 - __Tabular data sets__ can be access through the `AzureMLEnvironment` class, as described in [Interactive experimentations](experimenting)
 
+```python
+df = work_env.load_tabular_dataset('datasetname')
+```
+
 __Model evaluation__
 
 It's important to track the evaluation results of the training.  This can be done through the AzureMLTrainer class as described in [Interactive experimentations](experimenting)
 
+An example to evaluate a classifier.  This will upload the confusion matrix, the RoC curve and the metrics to the Run.
+
 ```python
 trainer.evaluate_classifier(logreg, X_test, y_test, show_roc = True, upload_model = True)
+```
+
+__Add metrics to the run__
+
+Not every model will be a classifier or a standard model that we provide an out of the box evaluation method for.  Sometimes, you will need to add your own metrics to the Run.  This can be done through the following code:
+
+```python
+# Tracking the dice coefficient
+trainer._log_metrics('dice_coef_loss', list(fitted_model.history.history['dice_coef_loss'])[-1], description='')
 ```
 
 __Model persistance__
@@ -158,8 +173,6 @@ trainer.start_training(training_name, estimator_type='tensorflow',
                        compute_target='gp-cluster', gpu_compute=True, script_parameters = arguments)
 
 ```
-
-## Sample notebooks
 
 
 
