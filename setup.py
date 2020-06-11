@@ -40,7 +40,7 @@ setuptools.setup(
     package_dir={'arcus.azureml': 'arcus/azureml'},
     include_package_data=True,
     namespace_packages=['arcus'],
-    install_requires=['pandas', 'numpy', 'azureml-core', 'joblib'],
+    install_requires=['pandas', 'numpy', 'arcus-ml>=1.0.10', 'azureml-core', 'joblib'],
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: MIT License",

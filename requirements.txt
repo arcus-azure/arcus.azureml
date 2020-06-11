@@ -7,6 +7,9 @@ azureml.dataprep
 tqdm
 joblib
 scikit-learn
+scikit-image
 matplotlib
 tensorflow
 keras
+arcus-ml>=1.0.10
+opencv-python
