@@ -174,7 +174,7 @@ class AzureMLTrainer(trainer.Trainer):
 
         self._complete_run()
 
-    def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, 
+    def evaluate_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, save_curves_as_image: bool = False,
                              class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
 
         '''
@@ -184,6 +184,7 @@ class AzureMLTrainer(trainer.Trainer):
             X_test (np.array): The test set to calculate the predictions with
             y_test (np.array): The output test set to evaluate the predictions against
             show_roc (bool): This will upload the ROC curve to the run in case of a binary classifier
+            save_curves_as_image (bool): This will save the training & loss curves as images
             class_names (np.array): The class names that will be linked to the Confusion Matrix.  If not provided, the unique values of the y_test matrix will be used
             finish_existing_run (bool): Will complete the existing run on AzureML (defaults to True)
             upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
@@ -200,7 +201,7 @@ class AzureMLTrainer(trainer.Trainer):
             else:
                 y_pred = fitted_model.predict(X_test)
                 y_pred = np.argmax(y_pred, axis=1)
-            self.add_training_plots(fitted_model)
+            self.add_training_plots(fitted_model, save_image=save_curves_as_image)
         else:
             y_pred = fitted_model.predict(X_test)
 
@@ -230,7 +231,7 @@ class AzureMLTrainer(trainer.Trainer):
         if return_predictions:  
             return y_pred
 
-    def add_training_plots(self, fitted_model, metrics=None):
+    def add_training_plots(self, fitted_model, metrics=None, save_image: bool = False):
         '''
         Add the training plots to the Run history
         Args:
@@ -244,11 +245,20 @@ class AzureMLTrainer(trainer.Trainer):
 
         for metric in metrics:
             if(metric in history.history.keys()):
-                self.__current_run.log_table(metric, {metric: history.history[metric]})
+                self.__current_run.log_table(f'Plot {metric}', {metric: history.history[metric]})
 
+                if(save_image and not metric.startswith('val_') and metric in history.history.keys()):
+                    plt.plot(history.history[metric])
+                    plt.plot(history.history[f'val_{metric}'])
+                    plt.title(f'model {metric}')
+                    plt.ylabel(metric)
+                    plt.xlabel('epoch')
+                    plt.legend(['train', 'test'], loc='upper left')
+                    #plt.show()
+                    self.__current_run.log_image(f'model {metric}', plot=plt)
+                    plt.close()
 
-
-    def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0,
+    def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0, save_curves_as_image: bool = False,
                                 class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
 
         '''
@@ -266,7 +276,7 @@ class AzureMLTrainer(trainer.Trainer):
             np.array: The predicted (y_pred) values against the model
         ''' 
         
-        y_pred = self.evaluate_classifier(fitted_model, X_test, y_test, show_roc=show_roc, class_names= class_names, finish_existing_run=False, upload_model=upload_model, return_predictions=True)
+        y_pred = self.evaluate_classifier(fitted_model, X_test, y_test, show_roc=show_roc, save_curves_as_image=save_curves_as_image, class_names= class_names, finish_existing_run=False, upload_model=upload_model, return_predictions=True)
         if failed_classifications_to_save > 0:
             # Take incorrect classified images and save
             import random
@@ -280,11 +290,12 @@ class AzureMLTrainer(trainer.Trainer):
                     pred_class = class_names[pred_class]
                     act_class = class_names[act_class]
                 imgplot = explorer.show_image(X_test[i], silent_mode=True)
-                description = f'Predicted {pred_class} - Actual {act_class}  ({i})'
+                description = f'Predicted {pred_class} - Actual {act_class}'
                 self.__current_run.log_image(description, plot=imgplot)
 
         if return_predictions:  
             return y_pred
+
 
 
 
@@ -307,43 +318,7 @@ class AzureMLTrainer(trainer.Trainer):
                 output = self.__stack_images(output, img)
         return output
 
-    def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0,
-                                class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
-
-        '''
-        Will predict and evaluate a model against a test set and save all results to the active Run on AzureML
-        Args:
-            fitted_model (model): The already fitted model to be tested.  Sklearn and Keras models have been tested
-            X_test (np.array): The test set to calculate the predictions with
-            y_test (np.array): The output test set to evaluate the predictions against
-            show_roc (bool): This will upload the ROC curve to the run in case of a binary classifier
-            failed_classifications_to_save (int): If greather than 0, this amount of incorrectly classified images will be tracked to the Run
-            class_names (np.array): The class names that will be used in the description.  If not provided, the unique values of the y_test matrix will be used
-            finish_existing_run (bool): Will complete the existing run on AzureML (defaults to True)
-            upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
-        Returns: 
-            np.array: The predicted (y_pred) values against the model
-        ''' 
-        
-        y_pred = self.evaluate_classifier(fitted_model, X_test, y_test, show_roc=show_roc, class_names= class_names, finish_existing_run=False, upload_model=upload_model, return_predictions=True)
-        if failed_classifications_to_save > 0:
-            # Take incorrect classified images and save
-            import random
-            incorrect_predictions = [i for i, item in enumerate(y_pred) if item != y_test[i]]
-            total_images = min(len(incorrect_predictions), failed_classifications_to_save)
-
-            for i in random.sample(incorrect_predictions, total_images):
-                pred_class = y_pred[i]
-                act_class = y_test[i]
-                if class_names is not None:
-                    pred_class = class_names[pred_class]
-                    act_class = class_names[act_class]
-                imgplot = explorer.show_image(X_test[i], silent_mode=True)
-                description = f'Predicted {pred_class} - Actual {act_class}'
-                self.__current_run.log_image(description, plot=imgplot)
-
-        if return_predictions:  
-            return y_pred
+ 
 
     def save_image_outputs(self, X_test: np.array, y_test: np.array, y_pred: np.array, samples_to_save: int = 1) -> np.array:
         '''
