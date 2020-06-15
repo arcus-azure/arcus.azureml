@@ -360,32 +360,10 @@ class AzureMLTrainer(trainer.Trainer):
             total_images = min(len(y_pred), samples_to_save)
 
             for i in random.sample(range(len(y_pred)), total_images):
-                newimg = self.concat_images([X_test[i], y_test[i], y_pred[i]])
+                newimg = self.__concat_images([X_test[i], y_test[i], y_pred[i]])
                 imgplot = explorer.show_image(newimg, silent_mode=True)
                 self.__current_run.log_image(f'Image combo sample {i}', plot=imgplot)
                 imgplot.close()
-
-    # def save_image_outputs(self, X_test: np.array, y_test: np.array, y_pred: np.array, samples_to_save: int = 1) -> np.array:
-
-    #     '''
-    #     Will save image outputs to the run
-    #     Args:
-    #         X_test (np.array): The input images for the model
-    #         y_test (np.array): The actual expected output images of the model
-    #         y_pred (np.array): The predicted or calculated output images of the model
-    #         samples_to_save (int): If greather than 0, this amount of input, output and generated image combinations will be tracked to the Run
-    #     ''' 
-
-    #     if samples_to_save > 0:
-    #         # Take incorrect classified images and save
-    #         import random
-    #         total_images = min(len(y_pred), samples_to_save)
-
-    #         for i in random.sample(range(len(y_pred)), total_images):
-    #             groupplot = explorer.visualize({'Charts': [X_test[i]], 'Actuals': [y_test[i]], 'Calculated': [y_pred[i]]}, 1, grid_size=(6, 6), silent_mode=True)
-    #             image = X_test[i].reshape(X_test.shape[1], X_test.shape[2])
-    #             imgplot = explorer.show_image(image, silent_mode=True)
-    #             self.__current_run.log_image(f'Sample {i:02d} / {total_images:02d}', plot=groupplot)
 
     def setup_training(self, training_name: str, overwrite: bool = False):
         '''
