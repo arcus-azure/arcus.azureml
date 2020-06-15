@@ -230,7 +230,7 @@ class AzureMLTrainer(trainer.Trainer):
         if return_predictions:  
             return y_pred
 
-    def add_training_plots(self, fitted_model, metrics=None):
+    def add_training_plots(self, fitted_model, metrics=None, save_image: bool = False):
         '''
         Add the training plots to the Run history
         Args:
@@ -244,9 +244,18 @@ class AzureMLTrainer(trainer.Trainer):
 
         for metric in metrics:
             if(metric in history.history.keys()):
-                self.__current_run.log_table(metric, {metric: history.history[metric]})
+                self.__current_run.log_table(f'Plot {metric}', {metric: history.history[metric]})
 
-
+                if(save_image and not metric.startswith('val_') and metric in history.history.keys()):
+                    plt.plot(history.history[metric])
+                    plt.plot(history.history[f'val_{metric}'])
+                    plt.title(f'model {metric}')
+                    plt.ylabel(metric)
+                    plt.xlabel('epoch')
+                    plt.legend(['train', 'test'], loc='upper left')
+                    #plt.show()
+                    self.__current_run.log_image(f'model {metric}', plot=plt)
+                    plt.close()
 
     def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0,
                                 class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
