@@ -200,6 +200,7 @@ class AzureMLTrainer(trainer.Trainer):
             else:
                 y_pred = fitted_model.predict(X_test)
                 y_pred = np.argmax(y_pred, axis=1)
+            self.add_training_plots(fitted_model)
         else:
             y_pred = fitted_model.predict(X_test)
 
@@ -229,6 +230,101 @@ class AzureMLTrainer(trainer.Trainer):
         if return_predictions:  
             return y_pred
 
+    def add_training_plots(self, fitted_model, metrics=None):
+        '''
+        Add the training plots to the Run history
+        Args:
+            fitted_model (Keras model): the fitted model that contains the training history
+            metrics (list): the metrics that should be tracked to the run.  If None, all available metrics will be taken
+        
+        '''
+        history = fitted_model.history
+        if metrics is None:
+            metrics = history.history.keys()
+
+        for metric in metrics:
+            if(metric in history.history.keys()):
+                self.__current_run.log_table(metric, {metric: history.history[metric]})
+
+
+
+    def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0,
+                                class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
+
+        '''
+        Will predict and evaluate a model against a test set and save all results to the active Run on AzureML
+        Args:
+            fitted_model (model): The already fitted model to be tested.  Sklearn and Keras models have been tested
+            X_test (np.array): The test set to calculate the predictions with
+            y_test (np.array): The output test set to evaluate the predictions against
+            show_roc (bool): This will upload the ROC curve to the run in case of a binary classifier
+            failed_classifications_to_save (int): If greather than 0, this amount of incorrectly classified images will be tracked to the Run
+            class_names (np.array): The class names that will be used in the description.  If not provided, the unique values of the y_test matrix will be used
+            finish_existing_run (bool): Will complete the existing run on AzureML (defaults to True)
+            upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
+        Returns: 
+            np.array: The predicted (y_pred) values against the model
+        ''' 
+        
+        y_pred = self.evaluate_classifier(fitted_model, X_test, y_test, show_roc=show_roc, class_names= class_names, finish_existing_run=False, upload_model=upload_model, return_predictions=True)
+        if failed_classifications_to_save > 0:
+            # Take incorrect classified images and save
+            import random
+            incorrect_predictions = [i for i, item in enumerate(y_pred) if item != y_test[i]]
+            total_images = min(len(incorrect_predictions), failed_classifications_to_save)
+
+            for i in random.sample(incorrect_predictions, total_images):
+                pred_class = y_pred[i]
+                act_class = y_test[i]
+                if class_names is not None:
+                    pred_class = class_names[pred_class]
+                    act_class = class_names[act_class]
+                imgplot = explorer.show_image(X_test[i], silent_mode=True)
+                description = f'Predicted {pred_class} - Actual {act_class}  ({i})'
+                self.__current_run.log_image(description, plot=imgplot)
+
+        if return_predictions:  
+            return y_pred
+
+    def save_image_outputs(self, X_test: np.array, y_test: np.array, y_pred: np.array, samples_to_save: int = 1) -> np.array:
+        '''
+        Will save image outputs to the run
+        Args:
+            X_test (np.array): The input images for the model
+            y_test (np.array): The actual expected output images of the model
+            y_pred (np.array): The predicted or calculated output images of the model
+            samples_to_save (int): If greather than 0, this amount of input, output and generated image combinations will be tracked to the Run
+        ''' 
+
+        if samples_to_save > 0:
+            import random
+            total_images = min(len(y_pred), samples_to_save)
+
+            for i in random.sample(range(len(y_pred)), total_images):
+                newimg = self.concat_images([X_test[i], y_test[i], y_pred[i]])
+                imgplot = explorer.show_image(newimg, silent_mode=True)
+                self.__current_run.log_image(f'Image combo sample {i}', plot=imgplot)
+                imgplot.close()
+
+
+    def __stack_images(self, img1: np.array, img2: np.array):
+        ha,wa = img1.shape[:2]
+        hb,wb = img2.shape[:2]
+        max_width = np.max([wa, wb])
+        total_height = ha+hb
+        new_img = np.zeros(shape=(total_height, max_width, 3))
+        new_img[:ha,:wa]=img1
+        new_img[ha:hb+ha,:wb]=img2
+        return new_img
+
+    def __concat_images(self, image_list: np.array) -> np.array:
+        output = None
+        for i, img in enumerate(image_list):
+            if i==0:
+                output = img
+            else:
+                output = self.__stack_images(output, img)
+        return output
 
     def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0,
                                 class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
