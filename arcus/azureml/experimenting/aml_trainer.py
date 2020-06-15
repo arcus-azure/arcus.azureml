@@ -229,6 +229,23 @@ class AzureMLTrainer(trainer.Trainer):
         if return_predictions:  
             return y_pred
 
+    def add_training_plots(self, fitted_model, metrics=None):
+        '''
+        Add the training plots to the Run history
+        Args:
+            fitted_model (Keras model): the fitted model that contains the training history
+            metrics (list): the metrics that should be tracked to the run.  If None, all available metrics will be taken
+        
+        '''
+        history = fitted_model.history
+        if metrics is None:
+            metrics = history.history.keys()
+
+        for metric in metrics:
+            if(metric in history.history.keys()):
+                self.__current_run.log_table(metric, {metric: history.history[metric]})
+
+
 
     def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0,
                                 class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
@@ -262,14 +279,13 @@ class AzureMLTrainer(trainer.Trainer):
                     pred_class = class_names[pred_class]
                     act_class = class_names[act_class]
                 imgplot = explorer.show_image(X_test[i], silent_mode=True)
-                description = f'Predicted {pred_class} - Actual {act_class}'
+                description = f'Predicted {pred_class} - Actual {act_class}  ({i})'
                 self.__current_run.log_image(description, plot=imgplot)
 
         if return_predictions:  
             return y_pred
 
     def save_image_outputs(self, X_test: np.array, y_test: np.array, y_pred: np.array, samples_to_save: int = 1) -> np.array:
-
         '''
         Will save image outputs to the run
         Args:
@@ -280,15 +296,34 @@ class AzureMLTrainer(trainer.Trainer):
         ''' 
 
         if samples_to_save > 0:
-            # Take incorrect classified images and save
             import random
             total_images = min(len(y_pred), samples_to_save)
 
             for i in random.sample(range(len(y_pred)), total_images):
-                groupplot = explorer.visualize({'Charts': [X_test[i]], 'Actuals': [y_test[i]], 'Calculated': [y_pred[i]]}, 1, grid_size=(6, 6), silent_mode=True)
-                image = X_test[i].reshape(X_test.shape[1], X_test.shape[2])
-                imgplot = explorer.show_image(image, silent_mode=True)
-                self.__current_run.log_image(f'Sample {i:02d} / {total_images:02d}', plot=groupplot)
+                newimg = self.concat_images([X_test[i], y_test[i], y_pred[i]])
+                imgplot = explorer.show_image(newimg, silent_mode=True)
+                self.__current_run.log_image(f'Image combo sample {i}', plot=imgplot)
+                imgplot.close()
+
+
+    def __stack_images(self, img1: np.array, img2: np.array):
+        ha,wa = img1.shape[:2]
+        hb,wb = img2.shape[:2]
+        max_width = np.max([wa, wb])
+        total_height = ha+hb
+        new_img = np.zeros(shape=(total_height, max_width, 3))
+        new_img[:ha,:wa]=img1
+        new_img[ha:hb+ha,:wb]=img2
+        return new_img
+
+    def __concat_images(self, image_list: np.array) -> np.array:
+        output = None
+        for i, img in enumerate(image_list):
+            if i==0:
+                output = img
+            else:
+                output = self.__stack_images(output, img)
+        return output
 
     def setup_training(self, training_name: str, overwrite: bool = False):
         '''
