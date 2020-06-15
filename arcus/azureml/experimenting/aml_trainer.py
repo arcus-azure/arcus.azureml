@@ -200,6 +200,7 @@ class AzureMLTrainer(trainer.Trainer):
             else:
                 y_pred = fitted_model.predict(X_test)
                 y_pred = np.argmax(y_pred, axis=1)
+            self.add_training_plots(fitted_model)
         else:
             y_pred = fitted_model.predict(X_test)
 
