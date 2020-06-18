@@ -19,7 +19,7 @@ We offer the following concepts:
 - Enable trainings (through standard scripts and dependency files) to be executed locally and in the cloud, using the exact same logic and code.
 
 # Documentation
-All documentation can be found on [here](https://azureml.arcus-azure.net/).
+All documentation can be found on [here](https://azure-ml.arcus-azure.net/).
 
 # Installation
 
