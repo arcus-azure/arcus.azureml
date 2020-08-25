@@ -1,6 +1,5 @@
 from arcus.azureml.experimenting import trainer
 from arcus.azureml.experimenting import errors
-from arcus.ml.images import explorer
 
 from azureml.core import Workspace, Dataset, Datastore, Experiment, Run
 from azureml.core.compute import ComputeTarget, AmlCompute
@@ -275,6 +274,7 @@ class AzureMLTrainer(trainer.Trainer):
         Returns: 
             np.array: The predicted (y_pred) values against the model
         ''' 
+        from arcus.ml.images import explorer
         
         y_pred = self.evaluate_classifier(fitted_model, X_test, y_test, show_roc=show_roc, save_curves_as_image=save_curves_as_image, class_names= class_names, finish_existing_run=False, upload_model=upload_model, return_predictions=True)
         if failed_classifications_to_save > 0:
@@ -329,6 +329,7 @@ class AzureMLTrainer(trainer.Trainer):
             y_pred (np.array): The predicted or calculated output images of the model
             samples_to_save (int): If greather than 0, this amount of input, output and generated image combinations will be tracked to the Run
         ''' 
+        from arcus.ml.images import explorer
 
         if samples_to_save > 0:
             import random
