@@ -1,9 +1,9 @@
+import pytest
 import os
 
-from arcus.azureml.environment.aml_environment import AzureMLEnvironment as aml
-from arcus.azureml.datacollection.kagglecollection import KaggleDataCollector
+import arcus.azureml.environment.aml_environment as aml
+import arcus.azureml.datacollection.kagglecollection as kgl 
 
-import pytest
 
 def is_interactive():
     # If the environment variable System_DefinitionId is not available, we run locally
@@ -14,9 +14,9 @@ def test_download_to_azure():
         import pytest
         pytest.skip('Test only runs when interactive mode enable')
     
-    amlenv = aml.Create(config_file='.azureml/config.json')
+    amlenv = aml.AzureMLEnvironment.Create(config_file='.azureml/config.json')
     assert amlenv.isvalid()
 
-    collector = KaggleDataCollector()
+    collector = kgl.KaggleDataCollector()
     collector.copy_to_azureml(amlenv, 'new-york-state/nys-farm-product-dealer-licenses-currently-issued', local_path='kaggle_data', force_download=True)
     assert(1==1)
