@@ -12,7 +12,13 @@ class KaggleDataCollector():
     def copy_to_azureml(self, environment: aml.AzureMLEnvironment, dataset_name:str, user_name:str = None, user_key:str = None, use_key_vault:bool = True, local_path:str = None, force_download: bool = False):
         '''Downloads a kaggle dataset and stores it into an AzureML dataset
         Args:
+            environment (aml.AzureMLEnvironment): The environment in which the dataset should be created
             dataset_name (str): The name of the kaggle dataset
+            user_name (str): The kaggle user name (or the secret name in the KeyVault to it).  
+            user_key (str): The kaggle secret key (or the secret name in the KeyVault to it).  
+            use_key_vault (bool): Recommended, will retrieve the kaggle credentials from Key Vault
+            local_path (str): The local folder in which to persist the downloaded Kaggle data
+            force_download (bool): Will redownload and overwrite existing files
         '''  
         local_path = os.path.join(local_path, dataset_name.replace('/', '_').replace(' ', '-'))
 
