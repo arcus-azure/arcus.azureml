@@ -13,3 +13,4 @@ tensorflow
 keras
 arcus-ml>=1.0.11
 opencv-python
+kaggle
