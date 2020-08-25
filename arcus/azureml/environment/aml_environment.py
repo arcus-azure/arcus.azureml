@@ -197,6 +197,21 @@ class AzureMLEnvironment(env.WorkEnvironment):
         '''
         return aml_trainer.AzureMLTrainer(name, self.__workspace)
 
+    def get_secret(self, secret_name: str) -> str:
+        '''
+        Reads a secret string from the registered Azure KeyVault
+        Args:
+            secret_name (str): the name of the secret key to be registered in Azure KeyVault
+        Returns: 
+            str: the secret value in the KeyVault
+        '''
+        keyvault = self.__workspace.get_default_keyvault()
+        try:
+            return keyvault.get_secret(name=secret_name)
+        except:
+            return None
+
+
     def isvalid(self) -> bool:
         return True
 
