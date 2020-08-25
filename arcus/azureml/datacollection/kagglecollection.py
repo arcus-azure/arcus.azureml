@@ -1,6 +1,3 @@
-'''
-This module allows to download kaggle datasets to disk
-'''
 import os
 import arcus.azureml.environment.aml_environment as aml
 import logging
