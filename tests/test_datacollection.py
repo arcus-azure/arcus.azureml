@@ -1,4 +1,3 @@
-from arcus.azureml.datacollection.kagglecollection import copy_to_azureml
 import arcus.azureml.environment.errors as errors
 import os
 import arcus.azureml.environment.aml_environment as aml
@@ -14,6 +13,8 @@ def test_download_to_azure():
     if not is_interactive():
         import pytest
         pytest.skip('Test only runs when interactive mode enable')
+    
+    from arcus.azureml.datacollection.kagglecollection import copy_to_azureml
     
     amlenv = aml.AzureMLEnvironment.Create(config_file='.azureml/config.json')
     assert amlenv.isvalid()
