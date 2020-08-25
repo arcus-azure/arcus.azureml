@@ -34,6 +34,6 @@ It is highly recommended to provide the Kaggle credentials in the linked Azure K
 
 ## Sample notebooks
 
-[This notebook](https://github.com/arcus-azure/arcus.azureml/tree/master/samples/interactive_experiments.ipynb) can be used to play around with Azure ML experiments.
+[This notebook](https://github.com/arcus-azure/arcus.azureml/tree/master/samples/datacollection.ipynb) can be used to quickly execute data collection scripts.
 
 [&larr; back](/)
