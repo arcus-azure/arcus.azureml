@@ -176,3 +176,23 @@ def test_logging_dictionary():
     _run = trainer.new_run('logging dict', metrics={'BatchSize': 30, 'Epochs': 40})
 
     _run.complete()
+
+def test_secret_existing():
+    secret_key_name = 'unittestsecret'
+    if not is_interactive():
+        pytest.skip('Test only runs when interactive mode enable')
+
+    amlenv = fac.Create(connected = True, config_file='.azureml/config.json')
+    secret_value = amlenv.get_secret(secret_key_name)
+
+    assert(secret_value == 'unittestvalue')
+
+def test_secret_notexisting():
+    secret_key_name = 'unittestsecret2'
+    if not is_interactive():
+        pytest.skip('Test only runs when interactive mode enable')
+
+    amlenv = fac.Create(connected = True, config_file='.azureml/config.json')
+    secret_value = amlenv.get_secret(secret_key_name)
+
+    assert(secret_value == None)

@@ -7,6 +7,7 @@ redirect_from:
 ---
 
 # Arcus - Azure Azure Machine Learning
+
 [![Build Status](https://dev.azure.com/codit/Arcus/_apis/build/status/Commit%20builds/CI%20-%20Arcus.AzureML?branchName=master)](https://dev.azure.com/codit/Arcus/_build/latest?definitionId=833&branchName=master)
 [![PyPI version](https://badge.fury.io/py/arcus-azureml.svg)](https://badge.fury.io/py/arcus-azureml)
 
@@ -32,6 +33,7 @@ We are providing added value in every step of the Machine Learning process.  Wit
 
 - [Interactive experimentations](/features/experimenting) - Evolve your model and experiment with several approaches and parameters, while keeping track of your progress and maintain a reference to every attempt.
 - [Scheduling of trainings](/features/training) - Quite commonly, you start locally to train and try a model on a smaller set of data, only to evolve to cloud based training on the full data set.  
+- [Data collection and import](/features/datacollection) - Handy methods to retrieve data and load it into Azure Machine Learning
 - Deployment and hosting (future releases)
 - Feedback (future releases)
 
@@ -66,7 +68,9 @@ pip install -e /path-to-arcus
 ```
 
 # Customers
+
 Are you an Arcus user? Let us know and [get listed](https://bit.ly/become-a-listed-arcus-user)!
 
 # License Information
+
 This is licensed under The MIT License (MIT). Which means that you can use, copy, modify, merge, publish, distribute, sublicense, and/or sell copies of the web application. But you always need to state that Codit is the original author of this web application.

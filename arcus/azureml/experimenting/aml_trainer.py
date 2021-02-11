@@ -1,6 +1,5 @@
 from arcus.azureml.experimenting import trainer
 from arcus.azureml.experimenting import errors
-from arcus.ml.images import explorer
 
 from azureml.core import Workspace, Dataset, Datastore, Experiment, Run
 from azureml.core.compute import ComputeTarget, AmlCompute
@@ -276,6 +275,7 @@ class AzureMLTrainer(trainer.Trainer):
         Returns: 
             np.array: The predicted (y_pred) values against the model
         ''' 
+        from arcus.ml.images import explorer
         
         y_pred = self.evaluate_classifier(fitted_model, X_test, y_test, show_roc=show_roc, save_curves_as_image=save_curves_as_image, class_names= class_names, finish_existing_run=False, upload_model=upload_model, return_predictions=True)
         if failed_classifications_to_save > 0:
@@ -334,6 +334,7 @@ class AzureMLTrainer(trainer.Trainer):
             y_pred (np.array): The predicted or calculated output images of the model
             samples_to_save (int): If greather than 0, this amount of input, output and generated image combinations will be tracked to the Run
         ''' 
+        from arcus.ml.images import explorer
 
         if samples_to_save > 0:
             import random
@@ -380,13 +381,27 @@ class AzureMLTrainer(trainer.Trainer):
             gpu_compute (bool): Indicates if GPU compute is required for this script or not
             script_parameters (dict): A dictionary of key/value parameters that will be passed as arguments to the training script
             show_widget (bool): Will display the live tracking of the submitted Run
+        Returns:
+            Run : the submitted run
         '''
+        
         if use_estimator:
             print('Scheduling Estimator training')
             self._start_estimator_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
         else:
             print('Scheduling ScriptRunConfig training')
             self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
+        
+        if script_parameters is not None:
+            for arg in script_parameters.keys():
+                self.__current_run.log(arg.replace('--', ''), script_parameters[arg])
+
+        print(self.__current_run.get_portal_url())
+
+        if(show_widget):
+            from azureml.widgets import RunDetails
+            RunDetails(self.__current_run).show()
+        return self.__current_run
 
     def _start_environment_training(self, training_name: str, environment_type: str = None, input_datasets: np.array = None, 
                                     input_datasets_to_download: np.array = None, compute_target:str='local', gpu_compute: bool = False, 
@@ -452,12 +467,9 @@ class AzureMLTrainer(trainer.Trainer):
         #scriptrunconfig.run_config.data_references = datarefs
 
         # Submit training
-        run = self.__experiment.submit(scriptrunconfig)
-        print(run.get_portal_url())
+        self.__current_run = self.__experiment.submit(scriptrunconfig)
+        
 
-        if(show_widget):
-            from azureml.widgets import RunDetails
-            RunDetails(run).show()
 
     def _get_data_reference(self, dataset: Dataset):
         import json
@@ -530,12 +542,7 @@ class AzureMLTrainer(trainer.Trainer):
             estimator = PyTorch(**constructor_parameters)
 
         # Submit training
-        run = self.__experiment.submit(estimator)
-        print(run.get_portal_url())
-
-        if(show_widget):
-            from azureml.widgets import RunDetails
-            RunDetails(run).show()
+        self.__current_run = self.__experiment.submit(estimator)
 
     # protected implementation methods
     def _log_metrics(self, metric_name: str, metric_value: float, description:str = None):

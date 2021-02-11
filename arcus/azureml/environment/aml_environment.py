@@ -157,6 +157,34 @@ class AzureMLEnvironment(env.WorkEnvironment):
             _df.columns = columns
         return _df
 
+    def upload_dataset(self, dataset_name: str, local_folder: str, datastore_name: str = None, overwrite: bool = False, tags: dict = None) -> pd.DataFrame:
+        '''
+        Uploads data from a local directory into an AzureML Datastore that points to Azure Data lake
+        Args:
+            dataset_name (str): The name of the dataset to register
+            local_folder (str): The location of the local directory to take files from
+            datastore_path (str): The name of a DataStore that will contain the dataset
+        Returns:
+            FileDataset: The registered dataset, containing the files
+        '''
+        if not datastore_name:
+            # No datastore name is given, so we'll take the default one
+            datastore_name = self.__datastore_path
+
+        # Connecting data store
+        datastore = Datastore(self.__workspace, name=datastore_name)
+
+        # TODO : check type of datastore
+        datastore.upload(local_folder, dataset_name, overwrite, True)
+        
+        datastore_paths = [(datastore, dataset_name)]
+        file_ds = Dataset.File.from_files(path=datastore_paths)
+
+        file_ds = file_ds.register(workspace=self.__workspace,
+                                 name=dataset_name,
+                                 description=dataset_name, 
+                                 tags = tags, create_new_version=True)
+
     def start_experiment(self, name: str) -> aml_trainer.AzureMLTrainer:
         '''
         Creates a new experiment (or connects to an existing one), using the give name
@@ -168,6 +196,21 @@ class AzureMLEnvironment(env.WorkEnvironment):
 
         '''
         return aml_trainer.AzureMLTrainer(name, self.__workspace)
+
+    def get_secret(self, secret_name: str) -> str:
+        '''
+        Reads a secret string from the registered Azure KeyVault
+        Args:
+            secret_name (str): the name of the secret key to be registered in Azure KeyVault
+        Returns: 
+            str: the secret value in the KeyVault
+        '''
+        keyvault = self.__workspace.get_default_keyvault()
+        try:
+            return keyvault.get_secret(name=secret_name)
+        except:
+            return None
+
 
     def isvalid(self) -> bool:
         return True
