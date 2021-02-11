@@ -28,37 +28,6 @@ import sys
 import time
 from datetime import date
 
-import math
-import matplotlib
-import matplotlib.pyplot as plt
-import seaborn as sns
-from collections import Counter
-
-from sklearn.preprocessing import MinMaxScaler
-from sklearn.model_selection import train_test_split
-import sklearn.metrics as metrics
-from sklearn.preprocessing import MinMaxScaler
-
-# Tensorflow / Keras references.  Feel free to remove when not used
-import tensorflow as tf
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Activation
-from tensorflow.keras.optimizers import SGD
-from tensorflow.keras.layers import Dense, Dropout, Flatten
-from tensorflow.keras.layers import Conv2D, MaxPooling2D
-from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
-from tensorflow.keras.models import Model
-from tensorflow.keras.preprocessing import image
-from tensorflow.keras.models import Sequential
-from tensorflow.keras.layers import Dense, Dropout, Activation, BatchNormalization
-from tensorflow.keras.applications.vgg19 import VGG19
-from tensorflow.keras.applications.vgg19 import preprocess_input, decode_predictions
-from tensorflow.keras.preprocessing.text import Tokenizer
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras.losses import categorical_crossentropy, binary_crossentropy, cosine_similarity
-from tensorflow.keras.utils import to_categorical
-from tensorflow.keras import backend as K
-from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
 ##########################################
 ### Parse arguments and prepare environment
@@ -99,42 +68,20 @@ if not os.path.exists('outputs'):
 # print(os.listdir('./datasetname/'))
 
 
-##########################################
-### Generic functions
-##########################################
-def perform_training(model, x, y, epoch_count, batch_size, val_split = 0.2, es_patience=-1):
-    cbs = list()
-    cbs.append(EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=es_patience))
 
-    if es_patience >= 0:
-        cbs.append(ModelCheckpoint('outputs/best_model.h5', monitor='val_loss', save_best_only=True, mode='min'))
-    
-    model.fit(x, y,
-                    epochs=epoch_count,
-                    batch_size=batch_size,
-                    validation_split = val_split,
-                    callbacks = cbs)
-
-    return model
-
-def build_model(input_shape, output_shape):
-    model = Sequential()
-    # Build model architecture here
-    # You can take input parameters from the arg parser to specify hyper parameters
-    return model
 
 ##########################################
 ### Perform training
 ##########################################
 
 # Load data 
-X = None # replace with actual input vals
-y = None # replace with actual output features
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=train_test_split_ratio, random_state=0)
+# X = None # replace with actual input vals
+# y = None # replace with actual output features
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=train_test_split_ratio, random_state=0)
 
 # Build model 
-model = build_model()
-fitted_model = perform_training(model, X_train, y_train, epoch_count=epoch_count, batch_size=batch_size, es_patience=es_patience)
+# model = build_model()
+# fitted_model = perform_training(model, X_train, y_train, epoch_count=epoch_count, batch_size=batch_size, es_patience=es_patience)
 
 # Custom metrics tracking
 # trainer._log_metrics('dice_coef_loss', list(fitted_model.history.history['dice_coef_loss'])[-1], description='')
@@ -142,7 +89,8 @@ fitted_model = perform_training(model, X_train, y_train, epoch_count=epoch_count
 
 ##########################################
 ### Save model
+### All files in outputs/ will be saved and made available through the SDK
 ##########################################
-fitted_model.save('outputs/model')
+# fitted_model.save('outputs/model')
 
 print('Training finished')
