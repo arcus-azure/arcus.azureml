@@ -146,3 +146,5 @@ tests/resources/test_training/
 .azureml/config.json
 c
 unit-test/*
+kaggle_data/*
+.vscode/settings.json
