@@ -17,3 +17,4 @@ scikit-learn
 opencv-python
 seaborn
 scikit-image
+pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
