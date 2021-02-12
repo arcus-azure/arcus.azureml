@@ -23,11 +23,11 @@ def get_training_environment(ws: Workspace, name: str, pip_file: str, use_gpu: b
     base_environment = environment_type
     if(environment_type == 'tensorflow'):
         # Using Tensorflow Estimator
-        base_environment = 'AzureML-TensorFlow-2.0-GPU' if use_gpu else 'AzureML-TensorFlow-2.0-CPU'
+        base_environment = 'AzureML-TensorFlow-2.3-GPU' if use_gpu else 'AzureML-TensorFlow-2.3-CPU'
     elif(environment_type == 'sklearn'):
         base_environment = 'AzureML-Scikit-learn-0.20.3'
     elif(environment_type == 'pytorch'):
-        base_environment = 'AzureML-PyTorch-1.5-GPU' if use_gpu else 'AzureML-PyTorch-1.5-GPU'
+        base_environment = 'AzureML-PyTorch-1.6-GPU' if use_gpu else 'AzureML-PyTorch-1.6-GPU'
 
     pip_packages=__get_package_list_from_requirements(pip_file)
 
