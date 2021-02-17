@@ -7,6 +7,8 @@ layout: default
 
 With `arcus-azureml`, we wrap the Azure ML SDK so that it becomes extremely easy to track and log the standard common metrics and results of experiments.  This makes it very powerful to find back and get an overview of the different trainings that get scheduled.  This section describes the actual logging capabilities for both interactive as scheduled experiments.
 
+![Experiment metrics table](../media/logging-metrics-table.png "Logging metrics")
+
 ## Evaluate classifiers
 
 When classifiers have been trained, it's important to add these metrics and evaluation results to the logging of the experiment.
@@ -24,6 +26,10 @@ If it's a binary classifier, you can indicate to track the RoC curve (`show_roc`
 When you're training classifiers, you can also save the training and loss curves as images by using the `save_curves_as_image` parameter
 If you want to use the class labels (instead of the class integers), you can pass them as string array through the `class_names` parameter
 
+An example of a confusion matrix and some basic logging:
+
+![Confusion matrix](../media/logging-metrics.png "Logging metrics")
+
 ## Evaluation of image classifiers
 
 You can use the above methods for image classifiers, but Arcus also provides a way to add some image specifics:
@@ -33,6 +39,8 @@ trainer.evaluate_image_classifier(model, X_test, y_test, show_roc = True, failed
 ```
 
 This behaves exactly as the previous code snippet, but when passing the `failed_classifications_to_save` parameter, Arcus will automatically select that many incorrect predictions and add them in the run details, so you immediately can see some incorrect predictions and visually inspect what could be a reason for that.
+
+![Logging of incorrect images](../media/logging-image-failedprediction.png "Logging of incorrect images")
 
 ## Saving of generated images
 
