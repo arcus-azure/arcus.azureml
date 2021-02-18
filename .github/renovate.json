@@ -1,0 +1,3 @@
+{
+    "ignorePaths": ["arcus/azureml/experimenting/resources/requirements.txt"]
+  }
