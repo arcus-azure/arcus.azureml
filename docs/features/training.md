@@ -112,7 +112,7 @@ Once the training script is ready, it's time to start the training on the comput
 We are launching the training, by using the Estimators that are available in AzureML. 
 The following steps will take place:
 
-1. Based on the specified trainingtype (Tensorflow, Scikit-learn, Pytorch, etc), a base docker image will be taken from the public Microsoft container repository.  The following estimator_types are currently supported: 
+1. Based on the specified trainingtype (Tensorflow, Scikit-learn, Pytorch, etc), a base docker image will be taken from the public Microsoft container repository.  The following environment_types are currently supported: 
     - `tensorflow`: has tensor flow enabled and installed (supporting GPU and CPU) and can be used for Keras too
     - `sklearn`: has the scikit-learn packages installed that are providing most common Machine Learning algorithms
     - `pytorch`: has the Deep Learning package of PyTorch installed.
@@ -135,7 +135,7 @@ arguments = {
     '--max_images': 20
 }
 
-trainer.start_training(training_name, estimator_type='tensorflow', 
+trainer.start_training(training_name, environment_type='tensorflow', 
                        compute_target='local', gpu_compute=True, script_parameters = arguments)
 ```
 
@@ -150,7 +150,7 @@ arguments = {
     '--max_images': 20
 }
 
-trainer.start_training(training_name, estimator_type='tensorflow', 
+trainer.start_training(training_name, environment_type='tensorflow', 
                        compute_target='gpu-cluster', gpu_compute=True, script_parameters = arguments)
 ```
 
@@ -167,7 +167,7 @@ The following code snippet shows to datasets that are being made available on th
 mount_dataset_name = 'ds_to_mount'
 download_dataset_name = 'ds_to_download'
 
-trainer.start_training(training_name, estimator_type='tensorflow', 
+trainer.start_training(training_name, environment_type='tensorflow', 
                        input_datasets = [mount_dataset_name],
                        input_datasets_to_download = [download_dataset_name],
                        compute_target='gp-cluster', gpu_compute=True, script_parameters = arguments)
