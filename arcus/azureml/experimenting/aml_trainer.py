@@ -257,7 +257,7 @@ class AzureMLTrainer(trainer.Trainer):
                     self.__current_run.log_image(f'model {metric}', plot=plt)
                     plt.close()
 
-    def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0, save_curves_as_image: bool = False,
+    def evaluate_image_classifier(self, fitted_model, X_test: np.array, y_test: np.array, show_roc: bool = False, failed_classifications_to_save: int = 0, image_shape = None, save_curves_as_image: bool = False,
                                 class_names: np.array = None, finish_existing_run: bool = True, upload_model: bool = True, return_predictions: bool = False) -> np.array:
 
         '''
@@ -268,6 +268,7 @@ class AzureMLTrainer(trainer.Trainer):
             y_test (np.array): The output test set to evaluate the predictions against
             show_roc (bool): This will upload the ROC curve to the run in case of a binary classifier
             failed_classifications_to_save (int): If greather than 0, this amount of incorrectly classified images will be tracked to the Run
+            image_shape ((int, int, int)): Indicates if images should be reshaped before saving them
             class_names (np.array): The class names that will be used in the description.  If not provided, the unique values of the y_test matrix will be used
             finish_existing_run (bool): Will complete the existing run on AzureML (defaults to True)
             upload_model (bool): This will upload the model (pkl file) to AzureML run (defaults to True)
@@ -289,7 +290,11 @@ class AzureMLTrainer(trainer.Trainer):
                 if class_names is not None:
                     pred_class = class_names[pred_class]
                     act_class = class_names[act_class]
-                imgplot = explorer.show_image(X_test[i], silent_mode=True)
+                if image_shape is not None:
+                    # Reshape image before saving it
+                    imgplot = explorer.show_image(X_test[i].reshape(image_shape), silent_mode=True)
+                else:
+                    imgplot = explorer.show_image(X_test[i], silent_mode=True)
                 description = f'Predicted {pred_class} - Actual {act_class}'
                 self.__current_run.log_image(description, plot=imgplot)
 
@@ -381,8 +386,10 @@ class AzureMLTrainer(trainer.Trainer):
         '''
         
         if use_estimator:
+            print('Scheduling Estimator training')
             self._start_estimator_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
         else:
+            print('Scheduling ScriptRunConfig training')
             self._start_environment_training(training_name, environment_type, input_datasets, input_datasets_to_download, compute_target, gpu_compute, script_parameters, show_widget, **kwargs)
         
         if script_parameters is not None:

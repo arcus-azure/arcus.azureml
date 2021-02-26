@@ -1,5 +1,6 @@
-arcus-azureml>=1.1.dev0
-arcus-ml>=0.0.dev0
+arcus-azureml>=1.1.2.2a2020061514
+arcus-ml>=1.0.11.1
+opencv-python==3.3.0.9
 azureml-telemetry
 azureml-widgets
 azureml-dataprep
@@ -14,7 +15,7 @@ matplotlib
 azureml-core
 tqdm
 scikit-learn
-opencv-python
 seaborn
 scikit-image
+inference-schema
 pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability

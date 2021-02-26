@@ -20,7 +20,7 @@ def get_training_environment(ws: Workspace, name: str, pip_file: str, use_gpu: b
     from azureml.core.runconfig import CondaDependencies
 
     print('Getting environment for type', environment_type)
-    base_environment = environment_type
+    base_environment = environment_type if environment_type else 'AzureML-Minimal'
     if(environment_type == 'tensorflow'):
         # Using Tensorflow Estimator
         base_environment = 'AzureML-TensorFlow-2.3-GPU' if use_gpu else 'AzureML-TensorFlow-2.3-CPU'

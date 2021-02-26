@@ -60,6 +60,7 @@ from tensorflow.keras.utils import to_categorical
 from tensorflow.keras import backend as K
 from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
 
+
 ##########################################
 ### Parse arguments and prepare environment
 ##########################################
@@ -99,42 +100,43 @@ if not os.path.exists('outputs'):
 # print(os.listdir('./datasetname/'))
 
 
+
 ##########################################
 ### Generic functions
 ##########################################
-def perform_training(model, x, y, epoch_count, batch_size, val_split = 0.2, es_patience=-1):
-    cbs = list()
-    cbs.append(EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=es_patience))
+# def perform_training(model, x, y, epoch_count, batch_size, val_split = 0.2, es_patience=-1):
+#     cbs = list()
+#     cbs.append(EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=es_patience))
 
-    if es_patience >= 0:
-        cbs.append(ModelCheckpoint('outputs/best_model.h5', monitor='val_loss', save_best_only=True, mode='min'))
-    
-    model.fit(x, y,
-                    epochs=epoch_count,
-                    batch_size=batch_size,
-                    validation_split = val_split,
-                    callbacks = cbs)
+#     if es_patience >= 0:
+#         cbs.append(ModelCheckpoint('outputs/best_model.h5', monitor='val_loss', save_best_only=True, mode='min'))
 
-    return model
+#     model.fit(x, y,
+#                     epochs=epoch_count,
+#                     batch_size=batch_size,
+#                     validation_split = val_split,
+#                     callbacks = cbs)
 
-def build_model(input_shape, output_shape):
-    model = Sequential()
-    # Build model architecture here
-    # You can take input parameters from the arg parser to specify hyper parameters
-    return model
+#     return model
+
+# def build_model(input_shape, output_shape):
+#     model = Sequential()
+#     # Build model architecture here
+#     # You can take input parameters from the arg parser to specify hyper parameters
+#     return model
 
 ##########################################
 ### Perform training
 ##########################################
 
 # Load data 
-X = None # replace with actual input vals
-y = None # replace with actual output features
-X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=train_test_split_ratio, random_state=0)
+# X = None # replace with actual input vals
+# y = None # replace with actual output features
+# X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=train_test_split_ratio, random_state=0)
 
 # Build model 
-model = build_model()
-fitted_model = perform_training(model, X_train, y_train, epoch_count=epoch_count, batch_size=batch_size, es_patience=es_patience)
+# model = build_model()
+# fitted_model = perform_training(model, X_train, y_train, epoch_count=epoch_count, batch_size=batch_size, es_patience=es_patience)
 
 # Custom metrics tracking
 # trainer._log_metrics('dice_coef_loss', list(fitted_model.history.history['dice_coef_loss'])[-1], description='')
@@ -142,7 +144,8 @@ fitted_model = perform_training(model, X_train, y_train, epoch_count=epoch_count
 
 ##########################################
 ### Save model
+### All files in outputs/ will be saved and made available through the SDK
 ##########################################
-fitted_model.save('outputs/model')
+# fitted_model.save('outputs/model')
 
 print('Training finished')
