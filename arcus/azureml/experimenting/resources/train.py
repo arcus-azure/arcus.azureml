@@ -69,6 +69,29 @@ if not os.path.exists('outputs'):
 
 
 
+##########################################
+### Generic functions
+##########################################
+# def perform_training(model, x, y, epoch_count, batch_size, val_split = 0.2, es_patience=-1):
+#     cbs = list()
+#     cbs.append(EarlyStopping(monitor='val_loss', mode='min', verbose=1, patience=es_patience))
+
+#     if es_patience >= 0:
+#         cbs.append(ModelCheckpoint('outputs/best_model.h5', monitor='val_loss', save_best_only=True, mode='min'))
+
+#     model.fit(x, y,
+#                     epochs=epoch_count,
+#                     batch_size=batch_size,
+#                     validation_split = val_split,
+#                     callbacks = cbs)
+
+#     return model
+
+# def build_model(input_shape, output_shape):
+#     model = Sequential()
+#     # Build model architecture here
+#     # You can take input parameters from the arg parser to specify hyper parameters
+#     return model
 
 ##########################################
 ### Perform training
