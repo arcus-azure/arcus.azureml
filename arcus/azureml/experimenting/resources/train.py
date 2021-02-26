@@ -28,6 +28,38 @@ import sys
 import time
 from datetime import date
 
+import math
+import matplotlib
+import matplotlib.pyplot as plt
+import seaborn as sns
+from collections import Counter
+
+from sklearn.preprocessing import MinMaxScaler
+from sklearn.model_selection import train_test_split
+import sklearn.metrics as metrics
+from sklearn.preprocessing import MinMaxScaler
+
+# Tensorflow / Keras references.  Feel free to remove when not used
+import tensorflow as tf
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Activation
+from tensorflow.keras.optimizers import SGD
+from tensorflow.keras.layers import Dense, Dropout, Flatten
+from tensorflow.keras.layers import Conv2D, MaxPooling2D
+from tensorflow.keras.layers import Input, Dense, Conv2D, MaxPooling2D, UpSampling2D
+from tensorflow.keras.models import Model
+from tensorflow.keras.preprocessing import image
+from tensorflow.keras.models import Sequential
+from tensorflow.keras.layers import Dense, Dropout, Activation, BatchNormalization
+from tensorflow.keras.applications.vgg19 import VGG19
+from tensorflow.keras.applications.vgg19 import preprocess_input, decode_predictions
+from tensorflow.keras.preprocessing.text import Tokenizer
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras.losses import categorical_crossentropy, binary_crossentropy, cosine_similarity
+from tensorflow.keras.utils import to_categorical
+from tensorflow.keras import backend as K
+from tensorflow.keras.callbacks import EarlyStopping, ModelCheckpoint
+
 
 ##########################################
 ### Parse arguments and prepare environment
