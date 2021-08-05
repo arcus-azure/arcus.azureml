@@ -117,5 +117,3 @@ trainer.evaluate_classifier(logreg, X_test, y_test, show_roc = True, upload_mode
 ## Sample notebooks
 
 [This notebook](https://github.com/arcus-azure/arcus.azureml/tree/master/samples/interactive_experiments.ipynb) can be used to play around with Azure ML experiments.
-
-[&larr; back](/)

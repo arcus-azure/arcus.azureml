@@ -173,7 +173,3 @@ trainer.start_training(training_name, environment_type='tensorflow',
                        compute_target='gp-cluster', gpu_compute=True, script_parameters = arguments)
 
 ```
-
-
-
-[&larr; back](/)
