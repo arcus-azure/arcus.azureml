@@ -77,7 +77,8 @@ module.exports = {
           // Please change this to your repo.
           editUrl:
             'https://github.com/arcus-azure/arcus.azureml/edit/master',
-          includeCurrentVersion:process.env.CONTEXT !== 'production',
+          // includeCurrentVersion:process.env.CONTEXT !== 'production',
+
         },
         theme: {
           customCss: require.resolve('./src/css/custom.css'),
