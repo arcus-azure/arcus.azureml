@@ -148,3 +148,7 @@ c
 unit-test/*
 kaggle_data/*
 .vscode/settings.json
+
+#docusaurus
+docs/.docusaurus
+docs/node_modules

@@ -4,9 +4,10 @@ layout: default
 permalink: /
 redirect_from:
  - /index.html
+slug: /
 ---
 
-# Arcus - Azure Azure Machine Learning
+# Arcus - Azure Machine Learning
 
 [![Build Status](https://dev.azure.com/codit/Arcus/_apis/build/status/Commit%20builds/CI%20-%20Arcus.AzureML?branchName=master)](https://dev.azure.com/codit/Arcus/_build/latest?definitionId=833&branchName=master)
 [![PyPI version](https://badge.fury.io/py/arcus-azureml.svg)](https://badge.fury.io/py/arcus-azureml)

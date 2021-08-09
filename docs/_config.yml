@@ -1,7 +1,0 @@
-repository: arcus-azure/arcus.azureml
-theme: jekyll-theme-slate
-logo: https://raw.githubusercontent.com/arcus-azure/arcus/master/media/arcus.png
-title: Arcus Azure ML
-description: Azure ML development in Azure with a breeze
-plugins:
-  - jemoji
