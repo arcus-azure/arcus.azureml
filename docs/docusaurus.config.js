@@ -19,7 +19,6 @@ module.exports = {
         facetFilters: ["tags:azure-ml"]
       },
     },
-    sidebarCollapsible: false,
     image: 'img/arcus.jpg',
     navbar: {
       title: 'Azure Machine Learning',
@@ -81,6 +80,7 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           routeBasePath: "/",
           path: 'preview',
+          sidebarCollapsible: false,
           // Please change this to your repo.
           editUrl:
             'https://github.com/arcus-azure/arcus.azureml/edit/master',
