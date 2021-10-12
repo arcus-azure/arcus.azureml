@@ -12,7 +12,13 @@ module.exports = {
   organizationName: 'arcus-azure', // Usually your GitHub org/user name.
   projectName: 'Arcus - Azure Machine Learning', // Usually your repo name.
   themeConfig: {
-    sidebarCollapsible: false,
+    algolia: {
+      apiKey: process.env.ALGOLIA_API_KEY,
+      indexName: 'arcus-azure',
+      searchParameters: {
+        facetFilters: ["tags:azure-ml"]
+      },
+    },
     image: 'img/arcus.jpg',
     navbar: {
       title: 'Azure Machine Learning',
@@ -74,6 +80,7 @@ module.exports = {
           sidebarPath: require.resolve('./sidebars.js'),
           routeBasePath: "/",
           path: 'preview',
+          sidebarCollapsible: false,
           // Please change this to your repo.
           editUrl:
             'https://github.com/arcus-azure/arcus.azureml/edit/master',
