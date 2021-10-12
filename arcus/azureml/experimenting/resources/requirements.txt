@@ -1,6 +1,6 @@
 arcus-azureml>=1.1.2.2a2020061514
 arcus-ml>=1.0.11.1
-opencv-python==3.3.0.9
+opencv-python==4.2.0.32
 azureml-telemetry
 azureml-widgets
 azureml-dataprep
