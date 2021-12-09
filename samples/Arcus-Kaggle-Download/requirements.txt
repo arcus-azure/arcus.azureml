@@ -1,5 +1,5 @@
 arcus-azureml==1.1.2.2.2020082505rc0
-arcus-ml>=0.0.dev0
+arcus-ml==1.0.11.2021120903rc0
 azureml-telemetry
 azureml-widgets
 azureml-dataprep
