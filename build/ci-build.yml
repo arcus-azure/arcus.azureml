@@ -99,7 +99,7 @@ stages:
 
   - stage: PackageAndRelease
     displayName: 'Package and release to PyPi'
-    dependsOn: Build
+    dependsOn: UnitTests
     condition: succeeded()
     jobs:
       - job: PackageAndRelease
