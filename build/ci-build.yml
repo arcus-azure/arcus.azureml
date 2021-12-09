@@ -67,6 +67,7 @@ stages:
 
       - job: UnitTests
         displayName: 'Run unit tests'
+        dependsOn: Dependencies
         steps:
           - script: |
               pip install pytest
