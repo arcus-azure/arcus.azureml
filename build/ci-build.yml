@@ -35,8 +35,6 @@ stages:
     jobs: 
       - job: DefineVersion
         displayName: 'Increase and define version number'
-        pool: 
-          vmImage: '(Vm.Image)'
         steps:
           - template: 'pypi/determine-pr-version.yml@templates'
             parameters:
@@ -57,8 +55,6 @@ stages:
 
       - job: Dependencies
         displayName: 'Install dependencies'
-        pool: 
-          vmImage: '(Vm.Image)'
         steps:
           - script: python -m pip install --upgrade pip setuptools wheel lazydocs
             displayName: 'Install tools'
@@ -76,8 +72,6 @@ stages:
     jobs: 
       - job: UnitTests
         displayName: 'Run unit tests'
-        pool: 
-          vmImage: '(Vm.Image)'
         steps:
           - script: |
               pip install pytest
@@ -104,8 +98,6 @@ stages:
     jobs:
       - job: PackageAndRelease
         displayName: 'Package and release'
-        pool:
-          vmImage: '(Vm.Image)'
         steps:
           - script: |    
               python setup.py sdist bdist_wheel 
