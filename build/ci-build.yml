@@ -59,9 +59,6 @@ stages:
           - script: python -m pip install --upgrade pip setuptools wheel lazydocs
             displayName: 'Install tools'
 
-          - script: pip install -r requirements.txt
-            displayName: 'Install requirements.txt'
-
           - script: python -m pip install --upgrade twine
             displayName: 'Install Twine'
 
@@ -69,6 +66,10 @@ stages:
         displayName: 'Run unit tests'
         dependsOn: Dependencies
         steps:
+          - script: pip install -r requirements.txt
+            displayName: 'Install requirements.txt'
+
+
           - script: |
               pip install pytest
               pip install pytest-cov
