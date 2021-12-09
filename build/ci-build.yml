@@ -31,7 +31,7 @@ pool:
 
 
 stages:
-  - stage: Prerequisites
+  - stage: BuildAndTest
     jobs: 
       - job: DefineVersion
         displayName: 'Increase and define version number'
@@ -65,11 +65,6 @@ stages:
           - script: python -m pip install --upgrade twine
             displayName: 'Install Twine'
 
-  - stage: UnitTests
-    displayName: Unit Tests
-    dependsOn: Prerequisites
-    condition: succeeded()
-    jobs: 
       - job: UnitTests
         displayName: 'Run unit tests'
         steps:
@@ -99,6 +94,9 @@ stages:
       - job: PackageAndRelease
         displayName: 'Package and release'
         steps:
+          - script: python -m pip install --upgrade pip setuptools wheel lazydocs
+            displayName: 'Install tools'
+
           - script: |    
               python setup.py sdist bdist_wheel 
             displayName: 'Build wheels'
