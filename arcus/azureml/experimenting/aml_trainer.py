@@ -536,6 +536,7 @@ class AzureMLTrainer(trainer.Trainer):
             estimator = TensorFlow(**constructor_parameters)
         elif(estimator_type == 'sklearn'):
             from azureml.train.sklearn import SKLearn
+            del constructor_parameters['use_gpu']
             estimator = SKLearn(**constructor_parameters)
         elif(estimator_type == 'pytorch'):
             from azureml.train.dnn import PyTorch
