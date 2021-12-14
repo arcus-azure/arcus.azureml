@@ -10,9 +10,9 @@ scikit-learn
 scikit-image
 matplotlib
 tensorflow>=2.1.0
-keras
+keras>=2.6.0rc3 # not directly required, pinned by Snyk to avoid a vulnerability
 arcus-ml>=1.0.11
-opencv-python
+opencv-python>=4.4.0.40
 pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerabilitypillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
 kaggle
-
+networkx>=2.6 # not directly required, pinned by Snyk to avoid a vulnerability
