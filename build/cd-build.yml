@@ -17,58 +17,69 @@ resources:
       name: arcus-azure/azure-devops-templates
       endpoint: arcus-azure
 
-steps:
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.7'
-    addToPath: true
-    architecture: 'x64'
+stages:
+  - stage: Prepare
+    jobs: 
+      - job: InstallPrerequisites
+        displayName: 'Install pre requisites & tools'
+        steps:
+        - task: UsePythonVersion@0
+          inputs:
+            versionSpec: '3.7'
+            addToPath: true
+            architecture: 'x64'
 
-- script: python -m pip install --upgrade pip setuptools wheel
-  displayName: 'Install tools'
+        - script: python -m pip install --upgrade pip setuptools wheel
+          displayName: 'Install tools'
 
-- script: pip install -r requirements.txt
-  displayName: 'Install requirements'
+        - script: pip install -r requirements.txt
+          displayName: 'Install requirements'
 
-- task: Bash@3
-  displayName: 'Update version number'
-  inputs:
-    targetType: 'inline'
-    script: 'sed -i ''s/1.0.0/$(Package.Version)/g'' arcus/azureml/__init__.py'
-    failOnStderr: true
+      - job: DefineVersion
+        displayName: 'Increase and define version number'
+        steps:
+        - task: Bash@3
+          displayName: 'Update version number'
+          inputs:
+            targetType: 'inline'
+            script: 'sed -i ''s/1.0.0/$(Package.Version)/g'' arcus/azureml/__init__.py'
+            failOnStderr: true
 
-- script: |    
-    python setup.py sdist bdist_wheel  
-  displayName: 'Artifact creation'
+      - job: PackageAndRelease
+        displayName: 'Package and release'
+        steps:
+        - script: |    
+            python setup.py sdist bdist_wheel  
+          displayName: 'Artifact creation'
 
-- script: python -m pip install --upgrade twine
-  displayName: 'Install Twine'
+        - script: python -m pip install --upgrade twine
+          displayName: 'Install Twine'
 
-- task: TwineAuthenticate@1
-  inputs:
-    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
+        - task: TwineAuthenticate@1
+          inputs:
+            pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
-- template: github/create-release.yml@templates
-  parameters:
-    tag: '$(Package.Version)'
-    releaseTitle: '$(Package.Version)'
-    repositoryName: 'arcus-azure/arcus.azureml'
-    releaseNotes: |
-      Install new version via [PyPi](https://pypi.org/project/arcus-azureml/$(Package.Version))
-      ```shell
-      PM > pip install arcus-azureml==$(Package.Version)
-      ```
+        - template: github/create-release.yml@templates
+          parameters:
+            tag: '$(Package.Version)'
+            releaseTitle: '$(Package.Version)'
+            repositoryName: 'arcus-azure/arcus.azureml'
+            releaseNotes: |
+              Install new version via [PyPi](https://pypi.org/project/arcus-azureml/$(Package.Version))
+              ```shell
+              PM > pip install arcus-azureml==$(Package.Version)
+              ```
 
-- script: |
-   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
-  displayName: 'Publish to PyPi'
+        - script: |
+            python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
+          displayName: 'Publish to PyPi'
 
-- task: CopyFiles@2  
-  inputs:    
-    targetFolder: $(Build.ArtifactStagingDirectory)
+        - task: CopyFiles@2  
+          inputs:    
+            targetFolder: $(Build.ArtifactStagingDirectory)
 
-- task: PublishBuildArtifacts@1  
-  inputs:    
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
-    ArtifactName: 'dist'    
-    publishLocation: 'Container'
+        - task: PublishBuildArtifacts@1  
+          inputs:    
+            PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
+            ArtifactName: 'dist'    
+            publishLocation: 'Container'

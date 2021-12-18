@@ -29,73 +29,86 @@ resources:
 pool:
   vmImage: 'ubuntu-latest'
 
-steps:
-- template: 'pypi/determine-pr-version.yml@templates'
-  parameters:
-    manualTriggerVersion: preview
 
-- task: UsePythonVersion@0
-  inputs:
-    versionSpec: '3.7'
-    addToPath: true
-    architecture: 'x64'
+stages:
+  - stage: BuildAndTest
+    jobs: 
+      - job: DefineVersion
+        displayName: 'Increase and define version number'
+        steps:
+          - template: 'pypi/determine-pr-version.yml@templates'
+            parameters:
+              manualTriggerVersion: preview
 
-- task: Bash@3
-  displayName: 'Update version number'
-  inputs:
-    targetType: 'inline'
-    script: 'sed -i ''s/1.0.0/$(Package.Version).$(Build.BuildNumber)/g'' arcus/azureml/__init__.py'
-    failOnStderr: true
-    
-- script: python -m pip install --upgrade pip setuptools wheel
-  displayName: 'Install tools'
+          - task: UsePythonVersion@0
+            inputs:
+              versionSpec: '3.7'
+              addToPath: true
+              architecture: 'x64'
 
-- script: pip install -r requirements.txt
-  displayName: 'Install requirements'
+          - task: Bash@3
+            displayName: 'Update version number'
+            inputs:
+              targetType: 'inline'
+              script: 'sed -i ''s/1.0.0/$(Package.Version).$(Build.BuildNumber)/g'' arcus/azureml/__init__.py'
+              failOnStderr: true
 
-- script: |
-    pip install pytest
-    pip install pytest-cov
-    pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
-  displayName: 'Unit tests (pytest)'
+      - job: UnitTests
+        displayName: 'Run unit tests'
+        steps:
+          - script: pip install -r requirements.txt
+            displayName: 'Install requirements.txt'
 
-- task: PublishTestResults@2
-  condition: succeededOrFailed()
-  inputs:
-    testResultsFiles: '**/test-*.xml'
-    testRunTitle: 'Publish test results for Python $(python.version)'
+          - script: |
+              pip install pytest
+              pip install pytest-cov
+              pytest tests --doctest-modules --junitxml=junit/test-results.xml --cov=. --cov-report=xml --cov-report=html
+            displayName: 'Unit tests (pytest)'
 
-- task: PublishCodeCoverageResults@1
-  inputs:
-    codeCoverageTool: Cobertura
-    summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
-    reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
+          - task: PublishTestResults@2
+            condition: succeededOrFailed()
+            inputs:
+              testResultsFiles: '**/test-*.xml'
+              testRunTitle: 'Publish test results for Python $(python.version)'
 
-- script: |    
-    python setup.py sdist bdist_wheel 
-  displayName: 'Build wheels'
+          - task: PublishCodeCoverageResults@1
+            inputs:
+              codeCoverageTool: Cobertura
+              summaryFileLocation: '$(System.DefaultWorkingDirectory)/**/coverage.xml'
+              reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
-- script: python -m pip install --upgrade twine
-  displayName: 'Install Twine'
+  - stage: PackageAndRelease
+    displayName: 'Package and release to PyPi'
+    dependsOn: BuildAndTest
+    condition: succeeded()
+    jobs:
+      - job: PackageAndRelease
+        displayName: 'Package and release'
+        steps:
+          - script: python -m pip install --upgrade pip setuptools wheel lazydocs
+            displayName: 'Install tools'
 
-- task: TwineAuthenticate@1
-  inputs:
-    pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
+          - script: python -m pip install --upgrade twine
+            displayName: 'Install Twine'
+            
+          - script: |    
+              python setup.py sdist bdist_wheel 
+            displayName: 'Build wheels'
 
-- script: |    
-    cat $(PYPIRC_PATH)
-  displayName: 'Print pypirc file'
+          - task: TwineAuthenticate@1
+            inputs:
+              pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
 
-- script: |
-   python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
-  displayName: 'Publish to PyPi dev'
+          - script: |
+              python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
+            displayName: 'Publish to PyPi dev'
 
-- task: CopyFiles@2  
-  inputs:    
-    targetFolder: $(Build.ArtifactStagingDirectory)
+          - task: CopyFiles@2  
+            inputs:    
+              targetFolder: $(Build.ArtifactStagingDirectory)
 
-- task: PublishBuildArtifacts@1  
-  inputs:    
-    PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
-    ArtifactName: 'dist'    
-    publishLocation: 'Container'
+          - task: PublishBuildArtifacts@1  
+            inputs:    
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
+              ArtifactName: 'dist'    
+              publishLocation: 'Container'
