@@ -3,7 +3,8 @@ pandas
 azureml-core
 azureml-train
 azureml-widgets
-azureml.dataprep
+azureml.dataprep>=2.23.0
+azure-mgmt-resource>=19.0.0
 tqdm
 joblib
 scikit-learn
