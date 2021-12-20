@@ -47,7 +47,9 @@ The following steps show you how you can get started with local development for 
 
 ## Installation guide
 
-The steps below are based on the [official documentation of Microsoft](https://docs.microsoft.com/en-us/windows/python/web-frameworks).
+The steps below are based on the [official documentation of Microsoft](https://docs.microsoft.com/en-us/windows/python/web-frameworks).  
+There are many ways to configure a local environment with a Python setup for development.  Here we are describing the way to use Python on Windows, using the Windows Subsystem for Linux and Visual Studio code. 
+It is also perfectly possible to install your Python straight onto your development machine and connect your favourite editor there.            
 
 ### Install Windows Subsystem for Linux
 
@@ -102,6 +104,12 @@ pip3 install <package-name>
 ### Run unit tests
 
 The VSCode Test Explorer should normally discover and show all unit tests that are part of the solution.  You can easily run those tests as a validation.
+
+![Test explorer](./docs/static/img/vs-test-explorer.png)
+
+In case unit tests are not discovered, the error will be shown in the Output window, when selecting 'Python' in the dropdown.
+
+![Test log](./docs/static/img/python-vs-output.png)
 
 ## Local reference installation
 
