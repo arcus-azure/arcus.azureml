@@ -87,28 +87,23 @@ stages:
         steps:
           - script: python -m pip install --upgrade pip setuptools wheel lazydocs
             displayName: 'Install tools'
-
-          - script: python -m pip install --upgrade twine
-            displayName: 'Install Twine'
             
           - script: |    
               python setup.py sdist bdist_wheel 
             displayName: 'Build wheels'
 
-          - task: TwineAuthenticate@1
+          - powershell: |
+              cd ./dist
+              Get-ChildItem -Path . -Filter *.whl |
+                % { curl -k -X POST https://www.myget.org/F/arcus/python/upload -H "Authorization: Bearer $(MyGet.ApiKey)" -F "data=@$($_.Name)" }
+            displayName: 'Publish to MyGet'
+
+          - task: CopyFiles@2
             inputs:
-              pythonUploadServiceConnection: 'Arcus AzureML PyPi feed'
-
-          - script: |
-              python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
-            displayName: 'Publish to PyPi dev'
-
-          - task: CopyFiles@2  
-            inputs:    
               targetFolder: $(Build.ArtifactStagingDirectory)
 
-          - task: PublishBuildArtifacts@1  
-            inputs:    
-              PathtoPublish: '$(Build.ArtifactStagingDirectory)'                  
-              ArtifactName: 'dist'    
+          - task: PublishBuildArtifacts@1
+            inputs:
+              PathtoPublish: '$(Build.ArtifactStagingDirectory)'
+              ArtifactName: 'dist'
               publishLocation: 'Container'
