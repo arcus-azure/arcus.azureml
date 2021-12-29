@@ -97,8 +97,10 @@ stages:
           - powershell: |
               cd ./dist
               Get-ChildItem -Path . -Filter *.whl |
-                % { curl -k -X POST https://www.myget.org/F/arcus/python/upload -H "Authorization: Bearer $(MyGet.ApiKey)" -F "data=@$($_.Name)" }
+                % { curl -k -X POST https://www.myget.org/F/arcus/python/upload -H "Authorization: Bearer $($env:APIKEY)" -F "data=@$($_.Name)" }
             displayName: 'Publish to MyGet'
+            env:
+              APIKEY: $(MyGet.ApiKey)
 
           - task: CopyFiles@2
             inputs:
