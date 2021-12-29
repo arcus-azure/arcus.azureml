@@ -100,7 +100,7 @@ stages:
                 % { $form = "data=@$($_.Name)"
                     Write-Host "Pushing $($_.Name) as form $($form) to MyGet"
                     $header = "Authorization: Bearer " + $env:APIKEY
-                    curl -v -k -X PUT https://www.myget.org/F/arcus/python/upload -H $header -F $form --show-error --fail-with-body }
+                    curl -v -k -X PUT https://www.myget.org/F/arcus/python/upload -H $header -F $form --show-error --fail }
             displayName: 'Publish to MyGet'
             env:
               APIKEY: $(MyGet.ApiKey)
