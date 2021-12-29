@@ -99,7 +99,7 @@ stages:
               Get-ChildItem -Path . -Filter *.whl |
                 % { $form = "data=@$($_.Name)"
                     Write-Host "Pushing $($_.Name) as form $($form) to MyGet"
-                    curl -k -X POST https://www.myget.org/F/arcus/python/upload -H "Authorization: Bearer $($env:APIKEY)" -F $form }
+                    curl -v -k -X POST https://www.myget.org/F/arcus/python/upload -H "Authorization: Bearer $($env:APIKEY)" -F $form }
             displayName: 'Publish to MyGet'
             env:
               APIKEY: $(MyGet.ApiKey)
