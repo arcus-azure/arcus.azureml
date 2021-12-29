@@ -103,7 +103,7 @@ stages:
                     curl -v -k -X POST https://www.myget.org/F/arcus/python/upload -H $header -F $form }
             displayName: 'Publish to MyGet'
             env:
-              APIKEY: $(MyGet.ApiKey)
+              APIKEY: $(ApiKey)
 
           - task: CopyFiles@2
             inputs:
