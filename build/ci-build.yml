@@ -94,7 +94,6 @@ stages:
               reportDirectory: '$(System.DefaultWorkingDirectory)/**/htmlcov'
 
   - stage: Release
-    displayName: 'Package and release'
     dependsOn: UnitTests
     condition: succeeded()
     jobs:
