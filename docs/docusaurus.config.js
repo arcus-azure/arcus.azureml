@@ -21,18 +21,17 @@ module.exports = {
         srcDark: 'img/arcus.png'
       },
       items: [
-        // Uncomment when having multiple versions
-        // {
-        //   type: 'docsVersionDropdown',
-        //
-        //   //// Optional
-        //   position: 'right',
-        //   // Add additional dropdown items at the beginning/end of the dropdown.
-        //   dropdownItemsBefore: [],
-        //   // Do not add the link active class when browsing docs.
-        //   dropdownActiveClassDisabled: true,
-        //   docsPluginId: 'default',
-        // },
+        {
+          type: 'docsVersionDropdown',
+        
+          //// Optional
+          position: 'right',
+          // Add additional dropdown items at the beginning/end of the dropdown.
+          dropdownItemsBefore: [],
+          // Do not add the link active class when browsing docs.
+          dropdownActiveClassDisabled: true,
+          docsPluginId: 'default',
+        },
         {
           type: 'search',
           position: 'right',
