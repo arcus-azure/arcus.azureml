@@ -86,7 +86,7 @@ stages:
             condition: succeededOrFailed()
             inputs:
               testResultsFiles: '**/test-*.xml'
-              testRunTitle: 'Publish test results for Python $(python.version)'
+              testRunTitle: 'Publish test results for Python $(Python.Version)'
           - task: PublishCodeCoverageResults@1
             inputs:
               codeCoverageTool: Cobertura
@@ -95,7 +95,7 @@ stages:
 
   - stage: Release
     displayName: 'Package and release'
-    dependsOn: Unit Tests
+    dependsOn: UnitTests
     condition: succeeded()
     jobs:
       - job: PushToPyPi
