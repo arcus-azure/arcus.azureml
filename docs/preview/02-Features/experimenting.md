@@ -89,7 +89,7 @@ __Accessing Azure Key Vault secret__
 The following code retrieves a secret from the registered Azure Key Vault in the experiment workspace of the run.
 
 ```python
-secret_value work_env.get_secret("MySecret")
+secret_value = work_env.get_secret("MySecret")
 ```
 
 ### Tracking an experiment
