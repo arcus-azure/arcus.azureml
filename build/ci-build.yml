@@ -98,8 +98,8 @@ stages:
     dependsOn: UnitTests
     condition: succeeded()
     jobs:
-      - job: PushToPyPi
-        displayName: 'Package wheel and push to PyPi'
+      - job: PushToMyGet
+        displayName: 'Push to MyGet'
         steps:
           - task: DownloadPipelineArtifact@2
             displayName: 'Download build artifacts'
