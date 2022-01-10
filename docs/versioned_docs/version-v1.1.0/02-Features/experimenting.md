@@ -84,14 +84,6 @@ The following code loads all files from the configured datastore that match the 
 partition_df = work_env.load_tabular_partition('folder/AT*', columns=['Close', 'High', 'Isin'])
 ```
 
-__Accessing Azure Key Vault secret__
-
-The following code retrieves a secret from the registered Azure Key Vault in the experiment workspace of the run.
-
-```python
-secret_value = work_env.get_secret("MySecret")
-```
-
 ### Tracking an experiment
 
 Now that the data is retrieved, we can start tracking an experiment.  In an experiment, there will be multiple runs.  All of this is implemented in the `AzureMLTrainer` class.  With this class, new runs can be started, results can be tracked and models can be saved in the AzureML workspace

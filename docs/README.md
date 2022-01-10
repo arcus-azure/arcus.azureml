@@ -34,7 +34,7 @@ You can use the version script to create a new documentation version based on th
 1. First, make sure your content in the `./preview` directory is ready to be frozen as a version. A version always should be based from master.
 2. Enter a new version number: 
    
-`npm run docusaurus docs:version 1.1.0`
+`npm run docusaurus docs:version v1.1.0`
 
 ---
 When tagging a new version, the document versioning mechanism will:
@@ -82,7 +82,7 @@ When creating a new documentation website update these values within the `docusa
 }
 ```
 
-## Syntax higlighting
+## Syntax highlighting
 
 To have syntax highlighting within the codeblocks you have to use one of the prism supported languages:
 
