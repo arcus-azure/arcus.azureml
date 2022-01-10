@@ -113,9 +113,16 @@ stages:
           - task: TwineAuthenticate@1
             inputs:
               pythonUploadServiceConnection: 'Arcus (Azure) ML MyGet feed'
-          - script: |
-              python -m twine upload --skip-existing --verbose -r 'arcus-azureml' --config-file $(PYPIRC_PATH) dist/*
-            displayName: 'Publish to PyPi dev'
+          - powershell: |
+              cd ./dist
+              Get-ChildItem -Path . -Filter *.whl |
+                % { $form = "data=@$($_.Name)"
+                    Write-Host "Pushing $($_.Name) as form $($form) to MyGet"
+                    $header = "Authorization: Bearer " + $env:APIKEY
+                    curl -v -k -X PUT https://www.myget.org/F/arcus/python/upload -H $header -F $form --show-error --fail }
+            displayName: 'Publish to MyGet'
+            env:
+              APIKEY: $(MyGet.ApiKey)
           - task: CopyFiles@2
             inputs:
               targetFolder: $(Build.ArtifactStagingDirectory)
