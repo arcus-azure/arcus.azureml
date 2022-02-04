@@ -3,17 +3,17 @@ pandas
 azureml-core
 azureml-train
 azureml-widgets
-azureml.dataprep>=2.23.0
-azure-mgmt-resource>=19.0.0
+azureml.dataprep==2.26.0
+azure-mgmt-resource==20.1.0
 tqdm
 joblib
 scikit-learn
 scikit-image
 matplotlib
-tensorflow>=2.1.0
-keras>=2.6.0rc3 # not directly required, pinned by Snyk to avoid a vulnerability
-arcus-ml>=1.0.11
-opencv-python>=4.4.0.40
-pillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerabilitypillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
+tensorflow==2.8.0
+keras==2.8.0 # not directly required, pinned by Snyk to avoid a vulnerability
+arcus-ml==1.0.11.1
+opencv-python==4.5.5.62
+pillow==9.0.1 # not directly required, pinned by Snyk to avoid a vulnerabilitypillow>=8.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
 kaggle
-networkx>=2.6 # not directly required, pinned by Snyk to avoid a vulnerability
+networkx==2.6.3 # not directly required, pinned by Snyk to avoid a vulnerability
