@@ -4,7 +4,7 @@ azureml-core
 azureml-train
 azureml-widgets
 azureml.dataprep==2.26.0
-azure-mgmt-resource==20.1.0
+azure-mgmt-resource==21.0.0
 tqdm
 joblib
 scikit-learn
