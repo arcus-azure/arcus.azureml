@@ -18,4 +18,4 @@ scikit-learn
 seaborn
 scikit-image
 inference-schema
-pillow==9.0.1 # not directly required, pinned by Snyk to avoid a vulnerability
+pillow==9.1.0 # not directly required, pinned by Snyk to avoid a vulnerability
