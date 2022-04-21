@@ -3,7 +3,7 @@ pandas
 azureml-core
 azureml-train
 azureml-widgets
-azureml.dataprep==2.26.0
+azureml.dataprep==3.1.1
 azure-mgmt-resource==20.1.0
 tqdm
 joblib
