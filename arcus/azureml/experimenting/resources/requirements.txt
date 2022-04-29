@@ -1,4 +1,4 @@
-arcus-azureml==1.1.2.2.2022013101rc0
+arcus-azureml==1.1.2.2.2022042902rc0
 arcus-ml==1.0.11.1
 opencv-python==3.3.0.9
 azureml-telemetry

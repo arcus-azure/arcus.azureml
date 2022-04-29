@@ -1,4 +1,4 @@
-arcus-azureml==1.1.2.2.2021123006
+arcus-azureml==1.1.2.2.2022030301
 arcus-ml==1.0.11.2022020303rc0
 azureml-telemetry
 azureml-widgets
