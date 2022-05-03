@@ -32,10 +32,10 @@ We offer the following concepts:
 
 We are providing added value in every step of the Machine Learning process.  With every new release, these features will be extended.  Currently we mostly focus on the training and experimentation phase.
 
-- [Interactive experimentations](/features/experimenting) - Evolve your model and experiment with several approaches and parameters, while keeping track of your progress and maintain a reference to every attempt.
-- [Scheduling of trainings](/features/training) - Very commonly, you start locally to train and try a model on a smaller set of data, only to evolve to cloud based training on the full data set. 
-- [Logging metrics of experiments](/features/logging) - A key aspect during training, is the logging of the different metrics and results of your experiment or run.  
-- [Data collection and import](/features/datacollection) - Handy methods to retrieve data and load it into Azure Machine Learning
+- [Interactive experimentations](./02-Features/experimenting.md) - Evolve your model and experiment with several approaches and parameters, while keeping track of your progress and maintain a reference to every attempt.
+- [Scheduling of trainings](./02-Features/training.md) - Very commonly, you start locally to train and try a model on a smaller set of data, only to evolve to cloud based training on the full data set. 
+- [Logging metrics of experiments](./02-Features/logging.md) - A key aspect during training, is the logging of the different metrics and results of your experiment or run.  
+- [Data collection and import](./02-Features/datacollection.md) - Handy methods to retrieve data and load it into Azure Machine Learning
 - Deployment and hosting (future releases)
 - Feedback (future releases)
 

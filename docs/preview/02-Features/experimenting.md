@@ -10,10 +10,10 @@ With `arcus-azureml`, we offer an out of the box library that implements the bes
 With every attempt in an experiment, the following actions can happen without having to write the extra code:
 
 1. Start a new experiment
-1. Launch a new run in the experiment, indicating the specific parameters or description
-1. Evaluate the tested model (classification or regression, for example) and have the results tracked to your run
-1. Persist the actual script/code to the Azure ML backend
-1. Save the trained model to the Azure ML backend
+2. Launch a new run in the experiment, indicating the specific parameters or description
+3. Evaluate the tested model (classification or regression, for example) and have the results tracked to your run
+4. Persist the actual script/code to the Azure ML backend
+5. Save the trained model to the Azure ML backend
 
 ## Common imports
 

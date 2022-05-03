@@ -73,7 +73,7 @@ trainer = AzureMLTrainer.CreateFromContext()
 __Data access__
 
 - __File data sets__ will be available in a directory relative to the training folder, with a name that equals the name of the dataset.  (hyphens in the dataset are however not supported).  
-- __Tabular data sets__ can be access through the `AzureMLEnvironment` class, as described in [Interactive experimentations](experimenting)
+- __Tabular data sets__ can be access through the `AzureMLEnvironment` class, as described in [Interactive experimentations](./experimenting.md)
 
 ```python
 df = work_env.load_tabular_dataset('datasetname')
@@ -81,7 +81,7 @@ df = work_env.load_tabular_dataset('datasetname')
 
 __Model evaluation__
 
-It's important to track the evaluation results of the training.  This can be done through the AzureMLTrainer class as described in [Interactive experimentations](experimenting)
+It's important to track the evaluation results of the training.  This can be done through the AzureMLTrainer class as described in [Interactive experimentations](./experimenting.md)
 
 An example to evaluate a classifier.  This will upload the confusion matrix, the RoC curve and the metrics to the Run.
 
@@ -117,12 +117,12 @@ The following steps will take place:
     - `sklearn`: has the scikit-learn packages installed that are providing most common Machine Learning algorithms
     - `pytorch`: has the Deep Learning package of PyTorch installed.
     - `None`: in this case an empty, default Estimator will be taken and all packages have to be provided through the requirements.txt file.
-1. In extra docker layers, there will be other python packages installed, by leveragin the configured requirements.txt file
-1. Once the image is ready, a container instance will be created on the specified compute.
-1. The file data sets will be mounted or downloaded (depending on the configuration) and made available on the docker image (as a relative folder to the training script)
-1. The training script will be launched with the script arguments 
-1. After the script completes, all files that have been written to the logs and the outputs folders will be uploaded to the Run history in AzureML
-1. The container instance will be removed, but the container image will remain in the Azure Container Registry that comes with an AzureML workspace (and is visible in your resource group).  This means that next time, the same image can be reused if the requirements.txt haven't changed.
+2. In extra docker layers, there will be other python packages installed, by leveragin the configured requirements.txt file
+3. Once the image is ready, a container instance will be created on the specified compute.
+4. The file data sets will be mounted or downloaded (depending on the configuration) and made available on the docker image (as a relative folder to the training script)
+5. The training script will be launched with the script arguments 
+6. After the script completes, all files that have been written to the logs and the outputs folders will be uploaded to the Run history in AzureML
+7. The container instance will be removed, but the container image will remain in the Azure Container Registry that comes with an AzureML workspace (and is visible in your resource group).  This means that next time, the same image can be reused if the requirements.txt haven't changed.
 
 __Launching a training on local compute__
 
