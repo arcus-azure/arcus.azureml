@@ -45,16 +45,8 @@ partitioned_datastore_name = 'aiincubators_covid'
 
 def test_factory_dataset():
     work_env = fac.Create(connected=True)
-    _df = work_env.load_tabular_dataset('smart-devops-changesets')
-    _df = _df.tail(20)
-    assert _df.shape == (20,16) # 16 columns expected
-
-
-def test_dataset():
-    work_env = aml.Create()
-    _df = work_env.load_tabular_dataset('smart-devops-changesets')
-    _df = _df.tail(20)
-    assert _df.shape == (20,16) # 16 columns expected
+    _df = work_env.load_tabular_dataset('student-admission')
+    assert _df.shape == (100,3)
 
 def test_partitions():
     work_env = fac.Create(connected=True, datastore_path='arcus_partition_test')
