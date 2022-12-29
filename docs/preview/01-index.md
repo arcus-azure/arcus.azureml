@@ -18,7 +18,7 @@ Azure Machine Learning development in a breeze.
 
 # Positioning
 
-With Arcus we are offering an open source library that streamlines Azure ML development, but lets ML engineers focus on the actual job at hand, without loosing time in tinkering with the AzureML SDK and all overhead that comes with it.
+With Arcus we are offering an open source library that streamlines Azure ML development, but lets ML engineers focus on the actual job at hand, without losing time in tinkering with the AzureML SDK and all overhead that comes with it.
 
 We offer the following concepts:
 
