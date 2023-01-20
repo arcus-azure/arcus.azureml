@@ -1,5 +1,5 @@
 # Arcus - Azure Azure Machine Learning
-[![Build Status](https://dev.azure.com/codit/Arcus/_apis/build/status/Commit%20builds/CI%20-%20Arcus.ML?repoName=arcus-azure%2Farcus.ml&branchName=master)](https://dev.azure.com/codit/Arcus/_build/latest?definitionId=836&repoName=arcus-azure%2Farcus.ml&branchName=master)
+[![Build Status](https://dev.azure.com/codit/Arcus/_apis/build/status/Commit%20builds/CI%20-%20Arcus.ML?repoName=arcus-azure%2Farcus.ml&branchName=main)](https://dev.azure.com/codit/Arcus/_build/latest?definitionId=836&repoName=arcus-azure%2Farcus.ml&branchName=main)
 [![PyPI version](https://badge.fury.io/py/arcus-azureml.svg)](https://badge.fury.io/py/arcus-azureml)
 
 Azure Machine Learning development in a breeze.
